@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 )
 
 // stakeRenewCmd represents the stake renew command
@@ -18,7 +18,7 @@ var stakeRenewCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := renew(args)
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
@@ -30,12 +30,12 @@ func init() {
 func renew(args []string) error {
 	bucketIndex, ok := new(big.Int).SetString(args[0], 10)
 	if !ok {
-		return output.NewError(output.ConvertError, "failed to convert bucket index", nil)
+		return ioctlio.NewError(ioctlio.ConvertError, "failed to convert bucket index", nil)
 	}
 
 	stakeDuration, err := parseStakeDuration(args[1])
 	if err != nil {
-		return output.NewError(0, "", err)
+		return ioctlio.NewError(0, "", err)
 	}
 
 	data := []byte{}
@@ -46,12 +46,12 @@ func renew(args []string) error {
 
 	contract, err := stakingContract()
 	if err != nil {
-		return output.NewError(output.AddressError, "failed to get contract address", err)
+		return ioctlio.NewError(ioctlio.AddressError, "failed to get contract address", err)
 	}
 
 	bytecode, err := stakeABI.Pack("restake", bucketIndex, stakeDuration, autoRestake, data)
 	if err != nil {
-		return output.NewError(output.ConvertError, "cannot generate bytecode from given command", err)
+		return ioctlio.NewError(ioctlio.ConvertError, "cannot generate bytecode from given command", err)
 	}
 
 	return Execute(contract.String(), big.NewInt(0), bytecode)

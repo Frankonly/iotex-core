@@ -14,7 +14,7 @@ import (
 	"github.com/iotexproject/iotex-proto/golang/iotextypes"
 
 	"github.com/iotexproject/iotex-core/ioctl/cmd/config"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 )
 
 // bcInfoCmd represents the bc info command
@@ -25,7 +25,7 @@ var bcInfoCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := bcInfo()
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
@@ -35,18 +35,18 @@ type infoMessage struct {
 }
 
 func (m *infoMessage) String() string {
-	if output.Format == "" {
-		message := fmt.Sprintf("Blockchain Node: %s\n%s", m.Node, output.JSONString(m.Info))
+	if ioctlio.Format == "" {
+		message := fmt.Sprintf("Blockchain Node: %s\n%s", m.Node, ioctlio.JSONString(m.Info))
 		return message
 	}
-	return output.FormatString(output.Result, m)
+	return ioctlio.FormatString(ioctlio.Result, m)
 }
 
 // bcInfo get current information of block chain from server
 func bcInfo() error {
 	chainMeta, err := GetChainMeta()
 	if err != nil {
-		return output.NewError(0, "failed to get chain meta", err)
+		return ioctlio.NewError(0, "failed to get chain meta", err)
 	}
 	message := infoMessage{Node: config.ReadConfig.Endpoint, Info: chainMeta}
 	fmt.Println(message.String())

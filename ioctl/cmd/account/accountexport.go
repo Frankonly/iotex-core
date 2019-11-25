@@ -11,7 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/util"
 )
 
@@ -23,25 +23,25 @@ var accountExportCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := accountExport(args[0])
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
 func accountExport(arg string) error {
 	addr, err := util.Address(arg)
 	if err != nil {
-		return output.NewError(output.AddressError, "failed to get address", err)
+		return ioctlio.NewError(ioctlio.AddressError, "failed to get address", err)
 	}
-	output.PrintQuery(fmt.Sprintf("Enter password #%s:\n", addr))
+	ioctlio.PrintQuery(fmt.Sprintf("Enter password #%s:\n", addr))
 	password, err := util.ReadSecretFromStdin()
 	if err != nil {
-		return output.NewError(output.InputError, "failed to get password", nil)
+		return ioctlio.NewError(ioctlio.InputError, "failed to get password", nil)
 	}
 	prvKey, err := KsAccountToPrivateKey(addr, password)
 	if err != nil {
-		return output.NewError(output.KeystoreError, "failed to get private key from keystore", err)
+		return ioctlio.NewError(ioctlio.KeystoreError, "failed to get private key from keystore", err)
 	}
 	defer prvKey.Zero()
-	output.PrintResult(prvKey.HexString())
+	ioctlio.PrintResult(prvKey.HexString())
 	return nil
 }

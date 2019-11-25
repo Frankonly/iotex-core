@@ -27,7 +27,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/iotexproject/iotex-core/ioctl/cmd/config"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/util"
 )
 
@@ -122,7 +122,7 @@ func KsAccountToPrivateKey(signer, password string) (crypto.PrivateKey, error) {
 func GetAccountMeta(addr string) (*iotextypes.AccountMeta, error) {
 	conn, err := util.ConnectToEndpoint(config.ReadConfig.SecureConnect && !config.Insecure)
 	if err != nil {
-		return nil, output.NewError(output.NetworkError, "failed to connect to endpoint", err)
+		return nil, ioctlio.NewError(ioctlio.NetworkError, "failed to connect to endpoint", err)
 	}
 	defer conn.Close()
 	cli := iotexapi.NewAPIServiceClient(conn)
@@ -132,67 +132,67 @@ func GetAccountMeta(addr string) (*iotextypes.AccountMeta, error) {
 	if err != nil {
 		sta, ok := status.FromError(err)
 		if ok {
-			return nil, output.NewError(output.APIError, sta.Message(), nil)
+			return nil, ioctlio.NewError(ioctlio.APIError, sta.Message(), nil)
 		}
-		return nil, output.NewError(output.NetworkError, "failed to invoke GetAccount api", err)
+		return nil, ioctlio.NewError(ioctlio.NetworkError, "failed to invoke GetAccount api", err)
 	}
 	return response.AccountMeta, nil
 }
 
 func newAccount(alias string, walletDir string) (string, error) {
-	output.PrintQuery(fmt.Sprintf("#%s: Set password\n", alias))
+	ioctlio.PrintQuery(fmt.Sprintf("#%s: Set password\n", alias))
 	password, err := util.ReadSecretFromStdin()
 	if err != nil {
-		return "", output.NewError(output.InputError, "failed to get password", err)
+		return "", ioctlio.NewError(ioctlio.InputError, "failed to get password", err)
 	}
-	output.PrintQuery(fmt.Sprintf("#%s: Enter password again\n", alias))
+	ioctlio.PrintQuery(fmt.Sprintf("#%s: Enter password again\n", alias))
 	passwordAgain, err := util.ReadSecretFromStdin()
 	if err != nil {
-		return "", output.NewError(output.InputError, "failed to get password", err)
+		return "", ioctlio.NewError(ioctlio.InputError, "failed to get password", err)
 	}
 	if password != passwordAgain {
-		return "", output.NewError(output.ValidationError, ErrPasswdNotMatch.Error(), nil)
+		return "", ioctlio.NewError(ioctlio.ValidationError, ErrPasswdNotMatch.Error(), nil)
 	}
 	ks := keystore.NewKeyStore(walletDir, keystore.StandardScryptN, keystore.StandardScryptP)
 	account, err := ks.NewAccount(password)
 	if err != nil {
-		return "", output.NewError(output.KeystoreError, "failed to create new keystore", err)
+		return "", ioctlio.NewError(ioctlio.KeystoreError, "failed to create new keystore", err)
 	}
 	addr, err := address.FromBytes(account.Address.Bytes())
 	if err != nil {
-		return "", output.NewError(output.ConvertError, "failed to convert bytes into address", err)
+		return "", ioctlio.NewError(ioctlio.ConvertError, "failed to convert bytes into address", err)
 	}
 	return addr.String(), nil
 }
 
 func newAccountByKey(alias string, privateKey string, walletDir string) (string, error) {
-	output.PrintQuery(fmt.Sprintf("#%s: Set password\n", alias))
+	ioctlio.PrintQuery(fmt.Sprintf("#%s: Set password\n", alias))
 	password, err := util.ReadSecretFromStdin()
 	if err != nil {
-		return "", output.NewError(output.InputError, "failed to get password", err)
+		return "", ioctlio.NewError(ioctlio.InputError, "failed to get password", err)
 	}
-	output.PrintQuery(fmt.Sprintf("#%s: Enter password again\n", alias))
+	ioctlio.PrintQuery(fmt.Sprintf("#%s: Enter password again\n", alias))
 	passwordAgain, err := util.ReadSecretFromStdin()
 	if err != nil {
-		return "", output.NewError(output.InputError, "failed to get password", err)
+		return "", ioctlio.NewError(ioctlio.InputError, "failed to get password", err)
 	}
 	if password != passwordAgain {
-		return "", output.NewError(output.ValidationError, ErrPasswdNotMatch.Error(), nil)
+		return "", ioctlio.NewError(ioctlio.ValidationError, ErrPasswdNotMatch.Error(), nil)
 	}
 	ks := keystore.NewKeyStore(walletDir, keystore.StandardScryptN, keystore.StandardScryptP)
 	priKey, err := crypto.HexStringToPrivateKey(privateKey)
 	if err != nil {
-		return "", output.NewError(output.CryptoError, "failed to generate private key from hex string ", err)
+		return "", ioctlio.NewError(ioctlio.CryptoError, "failed to generate private key from hex string ", err)
 	}
 	defer priKey.Zero()
 	account, err := ks.ImportECDSA(priKey.EcdsaPrivateKey(), password)
 	priKey.Zero()
 	if err != nil {
-		return "", output.NewError(output.KeystoreError, "failed to import private key into keystore ", err)
+		return "", ioctlio.NewError(ioctlio.KeystoreError, "failed to import private key into keystore ", err)
 	}
 	addr, err := address.FromBytes(account.Address.Bytes())
 	if err != nil {
-		return "", output.NewError(output.ConvertError, "failed to convert bytes into address", err)
+		return "", ioctlio.NewError(ioctlio.ConvertError, "failed to convert bytes into address", err)
 	}
 	return addr.String(), nil
 }
@@ -200,7 +200,7 @@ func newAccountByKey(alias string, privateKey string, walletDir string) (string,
 func newAccountByKeyStore(alias, passwordOfKeyStore, keyStorePath string, walletDir string) (string, error) {
 	keyJSON, err := ioutil.ReadFile(keyStorePath)
 	if err != nil {
-		return "", output.NewError(output.ReadFileError,
+		return "", ioctlio.NewError(ioctlio.ReadFileError,
 			fmt.Sprintf("keystore file \"%s\" read error", keyStorePath), nil)
 	}
 	key, err := keystore.DecryptKey(keyJSON, passwordOfKeyStore)
@@ -214,7 +214,7 @@ func newAccountByKeyStore(alias, passwordOfKeyStore, keyStorePath string, wallet
 		}(key.PrivateKey)
 	}
 	if err != nil {
-		return "", output.NewError(output.KeystoreError, "failed to decrypt key", err)
+		return "", ioctlio.NewError(ioctlio.KeystoreError, "failed to decrypt key", err)
 	}
 	return newAccountByKey(alias, hex.EncodeToString(ecrypto.FromECDSA(key.PrivateKey)), walletDir)
 }

@@ -25,7 +25,7 @@ import (
 
 	"github.com/iotexproject/iotex-core/ioctl/cmd/alias"
 	"github.com/iotexproject/iotex-core/ioctl/cmd/config"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/util"
 )
 
@@ -37,7 +37,7 @@ var actionHashCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := getActionByHash(args)
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
@@ -57,7 +57,7 @@ type actionMessage struct {
 }
 
 func (m *actionMessage) String() string {
-	if output.Format == "" {
+	if ioctlio.Format == "" {
 		message, err := printAction(m.Proto)
 		if err != nil {
 			log.Panic(err.Error())
@@ -69,7 +69,7 @@ func (m *actionMessage) String() string {
 		}
 		return message
 	}
-	return output.FormatString(output.Result, m)
+	return ioctlio.FormatString(ioctlio.Result, m)
 }
 
 // getActionByHash gets action of IoTeX Blockchain by hash
@@ -77,7 +77,7 @@ func getActionByHash(args []string) error {
 	hash := args[0]
 	conn, err := util.ConnectToEndpoint(config.ReadConfig.SecureConnect && !config.Insecure)
 	if err != nil {
-		return output.NewError(output.NetworkError, "failed to connect to endpoint", err)
+		return ioctlio.NewError(ioctlio.NetworkError, "failed to connect to endpoint", err)
 	}
 	defer conn.Close()
 	cli := iotexapi.NewAPIServiceClient(conn)
@@ -96,12 +96,12 @@ func getActionByHash(args []string) error {
 	if err != nil {
 		sta, ok := status.FromError(err)
 		if ok {
-			return output.NewError(output.APIError, sta.Message(), nil)
+			return ioctlio.NewError(ioctlio.APIError, sta.Message(), nil)
 		}
-		return output.NewError(output.NetworkError, "failed to invoke GetActions api", err)
+		return ioctlio.NewError(ioctlio.NetworkError, "failed to invoke GetActions api", err)
 	}
 	if len(response.ActionInfo) == 0 {
-		return output.NewError(output.APIError, "no action info returned", nil)
+		return ioctlio.NewError(ioctlio.APIError, "no action info returned", nil)
 	}
 	message := actionMessage{Proto: response.ActionInfo[0]}
 
@@ -112,9 +112,9 @@ func getActionByHash(args []string) error {
 		if ok && sta.Code() == codes.NotFound {
 			message.State = Pending
 		} else if ok {
-			return output.NewError(output.APIError, sta.Message(), nil)
+			return ioctlio.NewError(ioctlio.APIError, sta.Message(), nil)
 		}
-		return output.NewError(output.NetworkError, "failed to invoke GetReceiptByAction api", err)
+		return ioctlio.NewError(ioctlio.NetworkError, "failed to invoke GetReceiptByAction api", err)
 	}
 	message.State = Executed
 	message.Receipt = responseReceipt.ReceiptInfo.Receipt
@@ -142,11 +142,11 @@ func printAction(actionInfo *iotexapi.ActionInfo) (string, error) {
 func printActionProto(action *iotextypes.Action) (string, error) {
 	pubKey, err := crypto.BytesToPublicKey(action.SenderPubKey)
 	if err != nil {
-		return "", output.NewError(output.ConvertError, "failed to convert public key from bytes", err)
+		return "", ioctlio.NewError(ioctlio.ConvertError, "failed to convert public key from bytes", err)
 	}
 	senderAddress, err := address.FromBytes(pubKey.Hash())
 	if err != nil {
-		return "", output.NewError(output.ConvertError, "failed to convert bytes into address", err)
+		return "", ioctlio.NewError(ioctlio.ConvertError, "failed to convert bytes into address", err)
 	}
 	result := fmt.Sprintf("\nversion: %d  ", action.Core.GetVersion()) +
 		fmt.Sprintf("nonce: %d  ", action.Core.GetNonce()) +
@@ -161,7 +161,7 @@ func printActionProto(action *iotextypes.Action) (string, error) {
 		transfer := action.Core.GetTransfer()
 		amount, err := util.StringToIOTX(transfer.Amount)
 		if err != nil {
-			return "", output.NewError(output.ConvertError, "failed to convert string into IOTX amount", err)
+			return "", ioctlio.NewError(ioctlio.ConvertError, "failed to convert string into IOTX amount", err)
 		}
 		result += "transfer: <\n" +
 			fmt.Sprintf("  recipient: %s %s\n", transfer.Recipient,

@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/validator"
 )
 
@@ -53,7 +53,7 @@ var configGetCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := Get(args[0])
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
@@ -73,7 +73,7 @@ var configSetCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := set(args)
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
@@ -84,7 +84,7 @@ var configResetCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := reset()
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
@@ -94,27 +94,27 @@ type endpointMessage struct {
 }
 
 func (m *endpointMessage) String() string {
-	if output.Format == "" {
+	if ioctlio.Format == "" {
 		message := fmt.Sprint(m.Endpoint, "    secure connect(TLS):", m.SecureConnect)
 		return message
 	}
-	return output.FormatString(output.Result, m)
+	return ioctlio.FormatString(ioctlio.Result, m)
 }
 
 func (m *Context) String() string {
-	if output.Format == "" {
-		message := output.JSONString(m)
+	if ioctlio.Format == "" {
+		message := ioctlio.JSONString(m)
 		return message
 	}
-	return output.FormatString(output.Result, m)
+	return ioctlio.FormatString(ioctlio.Result, m)
 }
 
 func (m *Config) String() string {
-	if output.Format == "" {
-		message := output.JSONString(m)
+	if ioctlio.Format == "" {
+		message := ioctlio.JSONString(m)
 		return message
 	}
-	return output.FormatString(output.Result, m)
+	return ioctlio.FormatString(ioctlio.Result, m)
 }
 
 func init() {
@@ -126,28 +126,28 @@ func init() {
 func Get(arg string) error {
 	switch arg {
 	default:
-		return output.NewError(output.ConfigError, ErrConfigNotMatch.Error(), nil)
+		return ioctlio.NewError(ioctlio.ConfigError, ErrConfigNotMatch.Error(), nil)
 	case "endpoint":
 		if ReadConfig.Endpoint == "" {
-			return output.NewError(output.ConfigError, ErrEmptyEndpoint.Error(), nil)
+			return ioctlio.NewError(ioctlio.ConfigError, ErrEmptyEndpoint.Error(), nil)
 		}
 		message := endpointMessage{Endpoint: ReadConfig.Endpoint, SecureConnect: ReadConfig.SecureConnect}
 		fmt.Println(message.String())
 		return nil
 	case "wallet":
-		output.PrintResult(ReadConfig.Wallet)
+		ioctlio.PrintResult(ReadConfig.Wallet)
 		return nil
 	case "defaultacc":
 		if ReadConfig.DefaultAccount.AddressOrAlias == "" {
-			return output.NewError(output.ConfigError, "default account did not set", nil)
+			return ioctlio.NewError(ioctlio.ConfigError, "default account did not set", nil)
 		}
 		fmt.Println(ReadConfig.DefaultAccount.String())
 		return nil
 	case "explorer":
-		output.PrintResult(ReadConfig.Explorer)
+		ioctlio.PrintResult(ReadConfig.Explorer)
 		return nil
 	case "language":
-		output.PrintResult(ReadConfig.Language)
+		ioctlio.PrintResult(ReadConfig.Language)
 		return nil
 	case "all":
 		fmt.Println(ReadConfig.String())
@@ -159,7 +159,7 @@ func Get(arg string) error {
 func GetContextAddressOrAlias() (string, error) {
 	defaultAccount := ReadConfig.DefaultAccount
 	if strings.EqualFold(defaultAccount.AddressOrAlias, "") {
-		return "", output.NewError(output.ConfigError,
+		return "", ioctlio.NewError(ioctlio.ConfigError,
 			`use "ioctl config set defaultacc ADDRESS|ALIAS" to config default account first`, nil)
 	}
 	return defaultAccount.AddressOrAlias, nil
@@ -207,10 +207,10 @@ func isSupportedLanguage(arg string) Language {
 func writeConfig() error {
 	out, err := yaml.Marshal(&ReadConfig)
 	if err != nil {
-		return output.NewError(output.SerializationError, "failed to marshal config", err)
+		return ioctlio.NewError(ioctlio.SerializationError, "failed to marshal config", err)
 	}
 	if err := ioutil.WriteFile(DefaultConfigFile, out, 0600); err != nil {
-		return output.NewError(output.WriteFileError,
+		return ioctlio.NewError(ioctlio.WriteFileError,
 			fmt.Sprintf("failed to write to config file %s", DefaultConfigFile), err)
 	}
 	return nil
@@ -220,10 +220,10 @@ func writeConfig() error {
 func set(args []string) error {
 	switch args[0] {
 	default:
-		return output.NewError(output.ConfigError, ErrConfigNotMatch.Error(), nil)
+		return ioctlio.NewError(ioctlio.ConfigError, ErrConfigNotMatch.Error(), nil)
 	case "endpoint":
 		if !isValidEndpoint(args[1]) {
-			return output.NewError(output.ConfigError, fmt.Sprintf("endpoint %s is not valid", args[1]), nil)
+			return ioctlio.NewError(ioctlio.ConfigError, fmt.Sprintf("endpoint %s is not valid", args[1]), nil)
 		}
 		ReadConfig.Endpoint = args[1]
 		ReadConfig.SecureConnect = !Insecure
@@ -235,20 +235,20 @@ func set(args []string) error {
 		case isValidExplorer(lowArg):
 			ReadConfig.Explorer = lowArg
 		case args[1] == "custom":
-			output.PrintQuery(`Please enter a custom link below:("Example: iotexscan.io/action/")`)
+			ioctlio.PrintQuery(`Please enter a custom link below:("Example: iotexscan.io/action/")`)
 			var link string
 			fmt.Scanln(&link)
 			match, err := regexp.MatchString(urlPattern, link)
 			if err != nil {
-				return output.NewError(output.UndefinedError, "failed to validate link", nil)
+				return ioctlio.NewError(ioctlio.UndefinedError, "failed to validate link", nil)
 			}
 			if match {
 				ReadConfig.Explorer = link
 			} else {
-				return output.NewError(output.ValidationError, "invalid link", err)
+				return ioctlio.NewError(ioctlio.ValidationError, "invalid link", err)
 			}
 		default:
-			return output.NewError(output.ConfigError,
+			return ioctlio.NewError(ioctlio.ConfigError,
 				fmt.Sprintf("Explorer %s is not valid\nValid explorers: %s",
 					args[1], append(validExpl, "custom")), nil)
 		}
@@ -256,13 +256,13 @@ func set(args []string) error {
 		err1 := validator.ValidateAlias(args[1])
 		err2 := validator.ValidateAddress(args[1])
 		if err1 != nil && err2 != nil {
-			return output.NewError(output.ValidationError, "failed to validate alias or address", nil)
+			return ioctlio.NewError(ioctlio.ValidationError, "failed to validate alias or address", nil)
 		}
 		ReadConfig.DefaultAccount.AddressOrAlias = args[1]
 	case "language":
 		language := isSupportedLanguage(args[1])
 		if language == -1 {
-			return output.NewError(output.ConfigError,
+			return ioctlio.NewError(ioctlio.ConfigError,
 				fmt.Sprintf("Language %s is not supported\nSupported languages: %s",
 					args[1], supportedLanguage), nil)
 		}
@@ -272,7 +272,7 @@ func set(args []string) error {
 	if err != nil {
 		return err
 	}
-	output.PrintResult(strings.Title(args[0]) + " is set to " + args[1])
+	ioctlio.PrintResult(strings.Title(args[0]) + " is set to " + args[1])
 	return nil
 }
 
@@ -290,6 +290,6 @@ func reset() error {
 		return err
 	}
 
-	output.PrintResult("Config set to default values")
+	ioctlio.PrintResult("Config set to default values")
 	return nil
 }

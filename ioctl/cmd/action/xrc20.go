@@ -17,7 +17,7 @@ import (
 	"github.com/iotexproject/iotex-address/address"
 	"github.com/iotexproject/iotex-core/ioctl/cmd/alias"
 	"github.com/iotexproject/iotex-core/ioctl/cmd/config"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 )
 
 //Xrc20Cmd represent erc20 standard command-line
@@ -31,7 +31,7 @@ var xrc20ContractAddress string
 func xrc20Contract() (address.Address, error) {
 	addr, err := alias.IOAddress(xrc20ContractAddress)
 	if err != nil {
-		return nil, output.NewError(output.FlagError, "invalid xrc20 address flag", err)
+		return nil, ioctlio.NewError(ioctlio.FlagError, "invalid xrc20 address flag", err)
 	}
 	return addr, nil
 }
@@ -42,10 +42,10 @@ type amountMessage struct {
 }
 
 func (m *amountMessage) String() string {
-	if output.Format == "" {
+	if ioctlio.Format == "" {
 		return fmt.Sprintf("Raw output: %s\nOutput in decimal: %s", m.RawData, m.Decimal)
 	}
-	return output.FormatString(output.Result, m)
+	return ioctlio.FormatString(ioctlio.Result, m)
 }
 
 func init() {
@@ -67,29 +67,29 @@ func init() {
 func parseAmount(contract address.Address, amount string) (*big.Int, error) {
 	decimalBytecode, err := hex.DecodeString("313ce567")
 	if err != nil {
-		return nil, output.NewError(output.ConvertError, "failed to decode 313ce567", err)
+		return nil, ioctlio.NewError(ioctlio.ConvertError, "failed to decode 313ce567", err)
 	}
 	result, err := Read(contract, decimalBytecode)
 	if err != nil {
-		return nil, output.NewError(0, "failed to read contract", err)
+		return nil, ioctlio.NewError(0, "failed to read contract", err)
 	}
 	var decimal int64
 	if result != "" {
 		decimal, err = strconv.ParseInt(result, 16, 8)
 		if err != nil {
-			return nil, output.NewError(output.ConvertError, "failed to convert string into int64", err)
+			return nil, ioctlio.NewError(ioctlio.ConvertError, "failed to convert string into int64", err)
 		}
 	} else {
 		decimal = int64(0)
 	}
 	amountFloat, ok := (*big.Float).SetString(new(big.Float), amount)
 	if !ok {
-		return nil, output.NewError(output.ConvertError, "failed to convert string into bit float", err)
+		return nil, ioctlio.NewError(ioctlio.ConvertError, "failed to convert string into bit float", err)
 	}
 	amountResultFloat := amountFloat.Mul(amountFloat, new(big.Float).SetInt(new(big.Int).Exp(big.NewInt(10),
 		big.NewInt(decimal), nil)))
 	if !amountResultFloat.IsInt() {
-		return nil, output.NewError(output.ValidationError, "unappropriated amount", nil)
+		return nil, ioctlio.NewError(ioctlio.ValidationError, "unappropriated amount", nil)
 	}
 	var amountResultInt *big.Int
 	amountResultInt, _ = amountResultFloat.Int(amountResultInt)

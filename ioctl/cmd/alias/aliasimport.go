@@ -15,7 +15,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/iotexproject/iotex-core/ioctl/cmd/config"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 )
 
 // aliasImportCmd represents the alias import command
@@ -26,7 +26,7 @@ var aliasImportCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := aliasImport(cmd, args)
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
@@ -48,14 +48,14 @@ func aliasImport(cmd *cobra.Command, args []string) error {
 	var importedAliases aliases
 	switch format {
 	default:
-		return output.NewError(output.FlagError, fmt.Sprintf("invalid format flag %s", format), nil)
+		return ioctlio.NewError(ioctlio.FlagError, fmt.Sprintf("invalid format flag %s", format), nil)
 	case "json":
 		if err := json.Unmarshal([]byte(args[0]), &importedAliases); err != nil {
-			return output.NewError(output.SerializationError, "failed to unmarshal imported aliases", err)
+			return ioctlio.NewError(ioctlio.SerializationError, "failed to unmarshal imported aliases", err)
 		}
 	case "yaml":
 		if err := yaml.Unmarshal([]byte(args[0]), &importedAliases); err != nil {
-			return output.NewError(output.SerializationError, "failed to unmarshal imported aliases", err)
+			return ioctlio.NewError(ioctlio.SerializationError, "failed to unmarshal imported aliases", err)
 		}
 	}
 	aliases := GetAliasMap()
@@ -75,10 +75,10 @@ func aliasImport(cmd *cobra.Command, args []string) error {
 	}
 	out, err := yaml.Marshal(&config.ReadConfig)
 	if err != nil {
-		return output.NewError(output.SerializationError, "failed to marshal config", err)
+		return ioctlio.NewError(ioctlio.SerializationError, "failed to marshal config", err)
 	}
 	if err := ioutil.WriteFile(config.DefaultConfigFile, out, 0600); err != nil {
-		return output.NewError(output.WriteFileError,
+		return ioctlio.NewError(ioctlio.WriteFileError,
 			fmt.Sprintf("failed to write to config file %s", config.DefaultConfigFile), err)
 	}
 	fmt.Println(message.String())
@@ -86,12 +86,12 @@ func aliasImport(cmd *cobra.Command, args []string) error {
 }
 
 func (m *importMessage) String() string {
-	if output.Format == "" {
+	if ioctlio.Format == "" {
 		line := fmt.Sprintf("%d/%d aliases imported\nExisted aliases:", m.ImportedNumber, m.TotalNumber)
 		for _, alias := range m.Unimported {
 			line += fmt.Sprint(" " + alias.Name)
 		}
 		return line
 	}
-	return output.FormatString(output.Result, m)
+	return ioctlio.FormatString(ioctlio.Result, m)
 }

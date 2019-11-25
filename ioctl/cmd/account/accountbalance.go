@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/iotexproject/iotex-core/ioctl/cmd/config"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/util"
 )
 
@@ -41,7 +41,7 @@ var accountBalanceCmd = &cobra.Command{
 			arg = args[0]
 		}
 		err := balance(arg)
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
@@ -54,15 +54,15 @@ type balanceMessage struct {
 func balance(arg string) error {
 	address, err := util.GetAddress(arg)
 	if err != nil {
-		return output.NewError(output.AddressError, "", err)
+		return ioctlio.NewError(ioctlio.AddressError, "", err)
 	}
 	accountMeta, err := GetAccountMeta(address)
 	if err != nil {
-		return output.NewError(0, "", err) // TODO: undefined error
+		return ioctlio.NewError(0, "", err) // TODO: undefined error
 	}
 	balance, ok := big.NewInt(0).SetString(accountMeta.Balance, 10)
 	if !ok {
-		return output.NewError(output.ConvertError, "", err)
+		return ioctlio.NewError(ioctlio.ConvertError, "", err)
 	}
 	message := balanceMessage{
 		Address: address,
@@ -73,8 +73,8 @@ func balance(arg string) error {
 }
 
 func (m *balanceMessage) String() string {
-	if output.Format == "" {
+	if ioctlio.Format == "" {
 		return fmt.Sprintf("%s: %s IOTX", m.Address, m.Balance)
 	}
-	return output.FormatString(output.Result, m)
+	return ioctlio.FormatString(ioctlio.Result, m)
 }

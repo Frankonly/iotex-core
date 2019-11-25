@@ -28,7 +28,7 @@ import (
 	"github.com/iotexproject/iotex-core/ioctl/cmd/account"
 	"github.com/iotexproject/iotex-core/ioctl/cmd/config"
 	"github.com/iotexproject/iotex-core/ioctl/flag"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/util"
 	"github.com/iotexproject/iotex-core/pkg/unit"
 	"github.com/iotexproject/iotex-core/pkg/util/byteutil"
@@ -62,10 +62,10 @@ type sendMessage struct {
 }
 
 func (m *sendMessage) String() string {
-	if output.Format == "" {
+	if ioctlio.Format == "" {
 		return fmt.Sprintf("%s\nWait for several seconds and query this action by hash:%s", m.Info, m.URL)
 	}
-	return output.FormatString(output.Result, m)
+	return ioctlio.FormatString(ioctlio.Result, m)
 }
 
 func init() {
@@ -98,7 +98,7 @@ func nonce(executor string) (uint64, error) {
 	}
 	accountMeta, err := account.GetAccountMeta(executor)
 	if err != nil {
-		return 0, output.NewError(0, "failed to get account meta", err)
+		return 0, ioctlio.NewError(0, "failed to get account meta", err)
 	}
 	return accountMeta.PendingNonce, nil
 }
@@ -120,7 +120,7 @@ func gasPriceInRau() (*big.Int, error) {
 	}
 	conn, err := util.ConnectToEndpoint(config.ReadConfig.SecureConnect && !config.Insecure)
 	if err != nil {
-		return nil, output.NewError(output.NetworkError, "failed to connect to endpoint", err)
+		return nil, ioctlio.NewError(ioctlio.NetworkError, "failed to connect to endpoint", err)
 	}
 	defer conn.Close()
 	cli := iotexapi.NewAPIServiceClient(conn)
@@ -130,9 +130,9 @@ func gasPriceInRau() (*big.Int, error) {
 	if err != nil {
 		sta, ok := status.FromError(err)
 		if ok {
-			return nil, output.NewError(output.APIError, sta.Message(), nil)
+			return nil, ioctlio.NewError(ioctlio.APIError, sta.Message(), nil)
 		}
-		return nil, output.NewError(output.NetworkError, "failed to invoke SuggestGasPrice api", err)
+		return nil, ioctlio.NewError(ioctlio.NetworkError, "failed to invoke SuggestGasPrice api", err)
 	}
 	return new(big.Int).SetUint64(response.GasPrice), nil
 }
@@ -140,7 +140,7 @@ func gasPriceInRau() (*big.Int, error) {
 func fixGasLimit(caller string, execution *action.Execution) (*action.Execution, error) {
 	conn, err := util.ConnectToEndpoint(config.ReadConfig.SecureConnect && !config.Insecure)
 	if err != nil {
-		return nil, output.NewError(output.NetworkError, "failed to connect to endpoint", err)
+		return nil, ioctlio.NewError(ioctlio.NetworkError, "failed to connect to endpoint", err)
 	}
 	defer conn.Close()
 	cli := iotexapi.NewAPIServiceClient(conn)
@@ -154,9 +154,9 @@ func fixGasLimit(caller string, execution *action.Execution) (*action.Execution,
 	if err != nil {
 		sta, ok := status.FromError(err)
 		if ok {
-			return nil, output.NewError(output.APIError, sta.Message(), nil)
+			return nil, ioctlio.NewError(ioctlio.APIError, sta.Message(), nil)
 		}
-		return nil, output.NewError(output.NetworkError,
+		return nil, ioctlio.NewError(ioctlio.NetworkError,
 			"failed to invoke EstimateActionGasConsumption api", err)
 	}
 	return action.NewExecution(execution.Contract(), execution.Nonce(), execution.Amount(), res.Gas, execution.GasPrice(), execution.Data())
@@ -166,7 +166,7 @@ func fixGasLimit(caller string, execution *action.Execution) (*action.Execution,
 func SendRaw(selp *iotextypes.Action) error {
 	conn, err := util.ConnectToEndpoint(config.ReadConfig.SecureConnect && !config.Insecure)
 	if err != nil {
-		return output.NewError(output.NetworkError, "failed to connect to endpoint", err)
+		return ioctlio.NewError(ioctlio.NetworkError, "failed to connect to endpoint", err)
 	}
 	defer conn.Close()
 	cli := iotexapi.NewAPIServiceClient(conn)
@@ -175,9 +175,9 @@ func SendRaw(selp *iotextypes.Action) error {
 	request := &iotexapi.SendActionRequest{Action: selp}
 	if _, err = cli.SendAction(ctx, request); err != nil {
 		if sta, ok := status.FromError(err); ok {
-			return output.NewError(output.APIError, sta.Message(), nil)
+			return ioctlio.NewError(ioctlio.APIError, sta.Message(), nil)
 		}
-		return output.NewError(output.NetworkError, "failed to invoke SendAction api", err)
+		return ioctlio.NewError(ioctlio.NetworkError, "failed to invoke SendAction api", err)
 	}
 	shash := hash.Hash256b(byteutil.Must(proto.Marshal(selp)))
 	txhash := hex.EncodeToString(shash[:])
@@ -202,51 +202,51 @@ func SendAction(elp action.Envelope, signer string) error {
 		prvKeyOrPassword string
 	)
 	if !signerIsExist(signer) {
-		output.PrintQuery(fmt.Sprintf("Enter private key #%s:", signer))
+		ioctlio.PrintQuery(fmt.Sprintf("Enter private key #%s:", signer))
 		prvKeyOrPassword, err = util.ReadSecretFromStdin()
 		if err != nil {
-			return output.NewError(output.InputError, "failed to get private key", err)
+			return ioctlio.NewError(ioctlio.InputError, "failed to get private key", err)
 		}
 		prvKey, err = crypto.HexStringToPrivateKey(prvKeyOrPassword)
 		if err != nil {
-			return output.NewError(output.InputError, "failed to HexString private key", err)
+			return ioctlio.NewError(ioctlio.InputError, "failed to HexString private key", err)
 		}
 	} else if passwordFlag.Value() == "" {
-		output.PrintQuery(fmt.Sprintf("Enter password #%s:\n", signer))
+		ioctlio.PrintQuery(fmt.Sprintf("Enter password #%s:\n", signer))
 		prvKeyOrPassword, err = util.ReadSecretFromStdin()
 		if err != nil {
-			return output.NewError(output.InputError, "failed to get password", err)
+			return ioctlio.NewError(ioctlio.InputError, "failed to get password", err)
 		}
 	} else {
 		prvKeyOrPassword = passwordFlag.Value().(string)
 	}
 	prvKey, err = account.KsAccountToPrivateKey(signer, prvKeyOrPassword)
 	if err != nil {
-		return output.NewError(output.KeystoreError, "failed to get private key from keystore", err)
+		return ioctlio.NewError(ioctlio.KeystoreError, "failed to get private key from keystore", err)
 	}
 	defer prvKey.Zero()
 	sealed, err := action.Sign(elp, prvKey)
 	prvKey.Zero()
 	if err != nil {
-		return output.NewError(output.CryptoError, "failed to sign action", err)
+		return ioctlio.NewError(ioctlio.CryptoError, "failed to sign action", err)
 	}
 	if err := isBalanceEnough(signer, sealed); err != nil {
-		return output.NewError(0, "failed to pass balance check", err) // TODO: undefined error
+		return ioctlio.NewError(0, "failed to pass balance check", err) // TODO: undefined error
 	}
 	selp := sealed.Proto()
 
 	actionInfo, err := printActionProto(selp)
 	if err != nil {
-		return output.NewError(0, "failed to print action proto message", err)
+		return ioctlio.NewError(0, "failed to print action proto message", err)
 	}
 	if yesFlag.Value() == false {
 		var confirm string
 		info := fmt.Sprintln(actionInfo + "\nPlease confirm your action.\n")
-		message := output.ConfirmationMessage{Info: info, Options: []string{"yes"}}
+		message := ioctlio.ConfirmationMessage{Info: info, Options: []string{"yes"}}
 		fmt.Println(message.String())
 		fmt.Scanf("%s", &confirm)
 		if !strings.EqualFold(confirm, "yes") {
-			output.PrintResult("quit")
+			ioctlio.PrintResult("quit")
 			return nil
 		}
 	}
@@ -257,25 +257,25 @@ func SendAction(elp action.Envelope, signer string) error {
 func Execute(contract string, amount *big.Int, bytecode []byte) error {
 	gasPriceRau, err := gasPriceInRau()
 	if err != nil {
-		return output.NewError(0, "failed to get gas price", err)
+		return ioctlio.NewError(0, "failed to get gas price", err)
 	}
 	signer, err := signer()
 	if err != nil {
-		return output.NewError(output.AddressError, "failed to get signer address", err)
+		return ioctlio.NewError(ioctlio.AddressError, "failed to get signer address", err)
 	}
 	nonce, err := nonce(signer)
 	if err != nil {
-		return output.NewError(0, "failed to get nonce", err)
+		return ioctlio.NewError(0, "failed to get nonce", err)
 	}
 	gasLimit := gasLimitFlag.Value().(uint64)
 	tx, err := action.NewExecution(contract, nonce, amount, gasLimit, gasPriceRau, bytecode)
 	if err != nil || tx == nil {
-		return output.NewError(output.InstantiationError, "failed to make a Execution instance", err)
+		return ioctlio.NewError(ioctlio.InstantiationError, "failed to make a Execution instance", err)
 	}
 	if gasLimit == 0 {
 		tx, err = fixGasLimit(signer, tx)
 		if err != nil || tx == nil {
-			return output.NewError(0, "failed to fix Execution gaslimit", err)
+			return ioctlio.NewError(0, "failed to fix Execution gaslimit", err)
 		}
 		gasLimit = tx.GasLimit()
 	}
@@ -297,11 +297,11 @@ func Read(contract address.Address, bytecode []byte) (string, error) {
 	}
 	exec, err := action.NewExecution(contract.String(), 0, big.NewInt(0), defaultGasLimit, defaultGasPrice, bytecode)
 	if err != nil {
-		return "", output.NewError(output.InstantiationError, "cannot make an Execution instance", err)
+		return "", ioctlio.NewError(ioctlio.InstantiationError, "cannot make an Execution instance", err)
 	}
 	conn, err := util.ConnectToEndpoint(config.ReadConfig.SecureConnect && !config.Insecure)
 	if err != nil {
-		return "", output.NewError(output.NetworkError, "failed to connect to endpoint", err)
+		return "", ioctlio.NewError(ioctlio.NetworkError, "failed to connect to endpoint", err)
 	}
 	defer conn.Close()
 	res, err := iotexapi.NewAPIServiceClient(conn).ReadContract(
@@ -315,26 +315,26 @@ func Read(contract address.Address, bytecode []byte) (string, error) {
 		return res.Data, nil
 	}
 	if sta, ok := status.FromError(err); ok {
-		return "", output.NewError(output.APIError, sta.Message(), nil)
+		return "", ioctlio.NewError(ioctlio.APIError, sta.Message(), nil)
 	}
-	return "", output.NewError(output.NetworkError, "failed to invoke ReadContract api", err)
+	return "", ioctlio.NewError(ioctlio.NetworkError, "failed to invoke ReadContract api", err)
 }
 
 func isBalanceEnough(address string, act action.SealedEnvelope) error {
 	accountMeta, err := account.GetAccountMeta(address)
 	if err != nil {
-		return output.NewError(0, "failed to get account meta", err)
+		return ioctlio.NewError(0, "failed to get account meta", err)
 	}
 	balance, ok := big.NewInt(0).SetString(accountMeta.Balance, 10)
 	if !ok {
-		return output.NewError(output.ConvertError, "failed to convert balance into big int", nil)
+		return ioctlio.NewError(ioctlio.ConvertError, "failed to convert balance into big int", nil)
 	}
 	cost, err := act.Cost()
 	if err != nil {
-		return output.NewError(output.RuntimeError, "failed to check cost of an action", nil)
+		return ioctlio.NewError(ioctlio.RuntimeError, "failed to check cost of an action", nil)
 	}
 	if balance.Cmp(cost) < 0 {
-		return output.NewError(output.ValidationError, "balance is not enough", nil)
+		return ioctlio.NewError(ioctlio.ValidationError, "balance is not enough", nil)
 	}
 	return nil
 }

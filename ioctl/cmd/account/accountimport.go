@@ -14,7 +14,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/iotexproject/iotex-core/ioctl/cmd/config"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/util"
 	"github.com/iotexproject/iotex-core/ioctl/validator"
 )
@@ -33,7 +33,7 @@ var (
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 			err := accountImportKey(args)
-			return output.PrintError(err)
+			return ioctlio.PrintError(err)
 		},
 	}
 	// accountImportKeyCmd represents the account import keystore command
@@ -44,7 +44,7 @@ var (
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 			err := accountImportKeyStore(args)
-			return output.PrintError(err)
+			return ioctlio.PrintError(err)
 		},
 	}
 )
@@ -66,13 +66,13 @@ func writeToFile(alias, addr string) error {
 	config.ReadConfig.Aliases[alias] = addr
 	out, err := yaml.Marshal(&config.ReadConfig)
 	if err != nil {
-		return output.NewError(output.SerializationError, "failed to marshal config", err)
+		return ioctlio.NewError(ioctlio.SerializationError, "failed to marshal config", err)
 	}
 	if err := ioutil.WriteFile(config.DefaultConfigFile, out, 0600); err != nil {
-		return output.NewError(output.WriteFileError,
+		return ioctlio.NewError(ioctlio.WriteFileError,
 			fmt.Sprintf("failed to write to config file %s", config.DefaultConfigFile), err)
 	}
-	output.PrintResult(fmt.Sprintf("New account #%s is created. Keep your password, "+
+	ioctlio.PrintResult(fmt.Sprintf("New account #%s is created. Keep your password, "+
 		"or your will lose your private key.", alias))
 	return nil
 }
@@ -88,17 +88,17 @@ func accountImportKey(args []string) error {
 	alias := args[0]
 	err := validataAlias(alias)
 	if err != nil {
-		return output.NewError(output.ValidationError, "invalid alias", err)
+		return ioctlio.NewError(ioctlio.ValidationError, "invalid alias", err)
 	}
-	output.PrintQuery(fmt.Sprintf("#%s: Enter your private key, "+
+	ioctlio.PrintQuery(fmt.Sprintf("#%s: Enter your private key, "+
 		"which will not be exposed on the screen.", alias))
 	privateKey, err := readPasswordFromStdin()
 	if err != nil {
-		return output.NewError(output.InputError, "failed to get password", err)
+		return ioctlio.NewError(ioctlio.InputError, "failed to get password", err)
 	}
 	addr, err := newAccountByKey(alias, privateKey, config.ReadConfig.Wallet)
 	if err != nil {
-		return output.NewError(0, "", err)
+		return ioctlio.NewError(0, "", err)
 	}
 	return writeToFile(alias, addr)
 }
@@ -107,17 +107,17 @@ func accountImportKeyStore(args []string) error {
 	alias := args[0]
 	err := validataAlias(alias)
 	if err != nil {
-		return output.NewError(output.ValidationError, "invalid alias", err)
+		return ioctlio.NewError(ioctlio.ValidationError, "invalid alias", err)
 	}
-	output.PrintQuery(fmt.Sprintf("#%s: Enter your password of keystore, "+
+	ioctlio.PrintQuery(fmt.Sprintf("#%s: Enter your password of keystore, "+
 		"which will not be exposed on the screen.", alias))
 	password, err := util.ReadSecretFromStdin()
 	if err != nil {
-		return output.NewError(output.InputError, "failed to get password", err)
+		return ioctlio.NewError(ioctlio.InputError, "failed to get password", err)
 	}
 	addr, err := newAccountByKeyStore(alias, password, args[1], config.ReadConfig.Wallet)
 	if err != nil {
-		return output.NewError(0, "", err) // TODO: undefined error
+		return ioctlio.NewError(0, "", err) // TODO: undefined error
 	}
 	return writeToFile(alias, addr)
 }

@@ -14,7 +14,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/iotexproject/iotex-core/ioctl/cmd/config"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/validator"
 )
 
@@ -26,18 +26,18 @@ var aliasSetCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := set(args)
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
 // set sets alias
 func set(args []string) error {
 	if err := validator.ValidateAlias(args[0]); err != nil {
-		return output.NewError(output.ValidationError, "invalid alias", err)
+		return ioctlio.NewError(ioctlio.ValidationError, "invalid alias", err)
 	}
 	alias := args[0]
 	if err := validator.ValidateAddress(args[1]); err != nil {
-		return output.NewError(output.ValidationError, "invalid address", err)
+		return ioctlio.NewError(ioctlio.ValidationError, "invalid address", err)
 	}
 	addr := args[1]
 	aliases := GetAliasMap()
@@ -48,12 +48,12 @@ func set(args []string) error {
 	config.ReadConfig.Aliases[alias] = addr
 	out, err := yaml.Marshal(&config.ReadConfig)
 	if err != nil {
-		return output.NewError(output.SerializationError, "failed to marshal config", err)
+		return ioctlio.NewError(ioctlio.SerializationError, "failed to marshal config", err)
 	}
 	if err := ioutil.WriteFile(config.DefaultConfigFile, out, 0600); err != nil {
-		return output.NewError(output.WriteFileError,
+		return ioctlio.NewError(ioctlio.WriteFileError,
 			fmt.Sprintf("failed to write to config file %s", config.DefaultConfigFile), err)
 	}
-	output.PrintResult(args[0] + " has been set!")
+	ioctlio.PrintResult(args[0] + " has been set!")
 	return nil
 }

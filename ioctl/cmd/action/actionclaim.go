@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/iotexproject/iotex-core/action"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/util"
 )
 
@@ -22,7 +22,7 @@ var actionClaimCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := claim(args)
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
@@ -33,7 +33,7 @@ func init() {
 func claim(args []string) error {
 	amount, err := util.StringToRau(args[0], util.IotxDecimalNum)
 	if err != nil {
-		return output.NewError(output.ConvertError, "invalid amount", err)
+		return ioctlio.NewError(ioctlio.ConvertError, "invalid amount", err)
 	}
 	payload := make([]byte, 0)
 	if len(args) == 2 {
@@ -41,7 +41,7 @@ func claim(args []string) error {
 	}
 	sender, err := signer()
 	if err != nil {
-		return output.NewError(output.AddressError, "failed to get signer address", err)
+		return ioctlio.NewError(ioctlio.AddressError, "failed to get signer address", err)
 	}
 	gasLimit := gasLimitFlag.Value().(uint64)
 	if gasLimit == 0 {
@@ -50,11 +50,11 @@ func claim(args []string) error {
 	}
 	gasPriceRau, err := gasPriceInRau()
 	if err != nil {
-		return output.NewError(0, "failed to get gasPriceRau", err)
+		return ioctlio.NewError(0, "failed to get gasPriceRau", err)
 	}
 	nonce, err := nonce(sender)
 	if err != nil {
-		return output.NewError(0, "failed to get nonce", err)
+		return ioctlio.NewError(0, "failed to get nonce", err)
 	}
 	act := (&action.ClaimFromRewardingFundBuilder{}).SetAmount(amount).SetData(payload).Build()
 

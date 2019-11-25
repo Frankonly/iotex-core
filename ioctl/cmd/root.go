@@ -19,7 +19,7 @@ import (
 	"github.com/iotexproject/iotex-core/ioctl/cmd/node"
 	"github.com/iotexproject/iotex-core/ioctl/cmd/update"
 	"github.com/iotexproject/iotex-core/ioctl/cmd/version"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 )
 
 // Multi-language support
@@ -63,7 +63,7 @@ func init() {
 	RootCmd.AddCommand(version.VersionCmd)
 	RootCmd.AddCommand(update.UpdateCmd)
 
-	RootCmd.PersistentFlags().StringVarP(&output.Format, "output-format", "o", "",
+	RootCmd.PersistentFlags().StringVarP(&ioctlio.Format, "output-format", "o", "",
 		config.TranslateInLang(flagOutputFormatUsages, config.UILanguage))
 	RootCmd.HelpFunc()
 }

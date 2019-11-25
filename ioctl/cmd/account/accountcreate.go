@@ -15,7 +15,7 @@ import (
 	"github.com/iotexproject/iotex-address/address"
 	"github.com/spf13/cobra"
 
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 )
 
 var numAccounts uint
@@ -28,7 +28,7 @@ var accountCreateCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := accountCreate()
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
@@ -51,11 +51,11 @@ func accountCreate() error {
 	for i := 0; i < int(numAccounts); i++ {
 		private, err := crypto.GenerateKey()
 		if err != nil {
-			return output.NewError(output.CryptoError, "failed to generate new private key", err)
+			return ioctlio.NewError(ioctlio.CryptoError, "failed to generate new private key", err)
 		}
 		addr, err := address.FromBytes(private.PublicKey().Hash())
 		if err != nil {
-			return output.NewError(output.ConvertError, "failed to convert public key into address", err)
+			return ioctlio.NewError(ioctlio.ConvertError, "failed to convert public key into address", err)
 		}
 		newAccount := generatedAccount{
 			Address:    addr.String(),
@@ -71,12 +71,12 @@ func accountCreate() error {
 }
 
 func (m *createMessage) String() string {
-	if output.Format == "" {
+	if ioctlio.Format == "" {
 		byteAsJSON, err := json.MarshalIndent(m, "", "  ")
 		if err != nil {
 			log.Panic(err)
 		}
 		return fmt.Sprint(string(byteAsJSON))
 	}
-	return output.FormatString(output.Result, m)
+	return ioctlio.FormatString(ioctlio.Result, m)
 }

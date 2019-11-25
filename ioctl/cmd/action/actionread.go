@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/iotexproject/iotex-core/ioctl/cmd/alias"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 )
 
 // actionReadCmd represents the action Read command
@@ -21,7 +21,7 @@ var actionReadCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := read(args[0])
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
@@ -34,16 +34,16 @@ func init() {
 func read(arg string) error {
 	contract, err := alias.IOAddress(arg)
 	if err != nil {
-		return output.NewError(output.AddressError, "failed to get contract address", err)
+		return ioctlio.NewError(ioctlio.AddressError, "failed to get contract address", err)
 	}
 	bytecode, err := decodeBytecode()
 	if err != nil {
-		return output.NewError(output.ConvertError, "invalid bytecode", err)
+		return ioctlio.NewError(ioctlio.ConvertError, "invalid bytecode", err)
 	}
 	result, err := Read(contract, bytecode)
 	if err != nil {
-		return output.NewError(0, "failed to Read contract", err)
+		return ioctlio.NewError(0, "failed to Read contract", err)
 	}
-	output.PrintResult(result)
+	ioctlio.PrintResult(result)
 	return err
 }

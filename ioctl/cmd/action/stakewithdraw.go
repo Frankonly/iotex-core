@@ -3,7 +3,7 @@ package action
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 )
 
 // stakeWithdrawCmd represents the stake withdraw command
@@ -15,7 +15,7 @@ var stakeWithdrawCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := withdraw(args)
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 

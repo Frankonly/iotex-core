@@ -12,7 +12,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 )
 
 // xrc20TotalSupplyCmd represents total supply of the contract
@@ -22,22 +22,22 @@ var xrc20TotalSupplyCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := totalSupply()
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
 func totalSupply() error {
 	bytecode, err := xrc20ABI.Pack("totalSupply")
 	if err != nil {
-		return output.NewError(output.ConvertError, "cannot generate bytecode from given command", err)
+		return ioctlio.NewError(ioctlio.ConvertError, "cannot generate bytecode from given command", err)
 	}
 	contract, err := xrc20Contract()
 	if err != nil {
-		return output.NewError(output.AddressError, "failed to get contract address", err)
+		return ioctlio.NewError(ioctlio.AddressError, "failed to get contract address", err)
 	}
 	result, err := Read(contract, bytecode)
 	if err != nil {
-		return output.NewError(0, "failed to read contract", err)
+		return ioctlio.NewError(0, "failed to read contract", err)
 	}
 	decimal, _ := new(big.Int).SetString(result, 16)
 	message := amountMessage{RawData: result, Decimal: decimal.String()}

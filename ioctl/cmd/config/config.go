@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/pkg/log"
 )
 
@@ -113,7 +113,7 @@ func init() {
 	UILanguage = isSupportedLanguage(ReadConfig.Language)
 	if UILanguage == -1 {
 		UILanguage = 0
-		message := output.StringMessage(fmt.Sprintf("Language %s is not supported, English instead.",
+		message := ioctlio.StringMessage(fmt.Sprintf("Language %s is not supported, English instead.",
 			ReadConfig.Language))
 		fmt.Println(message.Warn())
 	}

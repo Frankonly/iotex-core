@@ -13,7 +13,7 @@ import (
 	"github.com/iotexproject/iotex-address/address"
 	"github.com/spf13/cobra"
 
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/util"
 )
 
@@ -26,7 +26,7 @@ var (
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 			err := accountVerify()
-			return output.PrintError(err)
+			return ioctlio.PrintError(err)
 		},
 	}
 )
@@ -40,15 +40,15 @@ func accountVerify() error {
 	fmt.Println("Enter private key:")
 	privateKey, err := util.ReadSecretFromStdin()
 	if err != nil {
-		return output.NewError(output.InputError, "failed to get private key", err)
+		return ioctlio.NewError(ioctlio.InputError, "failed to get private key", err)
 	}
 	priKey, err := crypto.HexStringToPrivateKey(privateKey)
 	if err != nil {
-		return output.NewError(output.CryptoError, "failed to generate private key from hex string", err)
+		return ioctlio.NewError(ioctlio.CryptoError, "failed to generate private key from hex string", err)
 	}
 	addr, err := address.FromBytes(priKey.PublicKey().Hash())
 	if err != nil {
-		return output.NewError(output.ConvertError, "failed to convert public key into address", err)
+		return ioctlio.NewError(ioctlio.ConvertError, "failed to convert public key into address", err)
 	}
 	message := verifyMessage{
 		Address:   addr.String(),
@@ -60,8 +60,8 @@ func accountVerify() error {
 }
 
 func (m *verifyMessage) String() string {
-	if output.Format == "" {
+	if ioctlio.Format == "" {
 		return fmt.Sprintf("Address:\t%s\nPublic Key:\t%s", m.Address, m.PublicKey)
 	}
-	return output.FormatString(output.Result, m)
+	return ioctlio.FormatString(ioctlio.Result, m)
 }

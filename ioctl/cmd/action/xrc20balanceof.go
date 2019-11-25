@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/iotexproject/iotex-core/ioctl/cmd/alias"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 )
 
 // xrc20BalanceOfCmd represents balanceOf function
@@ -24,26 +24,26 @@ var xrc20BalanceOfCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := balanceOf(args[0])
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
 func balanceOf(arg string) error {
 	owner, err := alias.EtherAddress(arg)
 	if err != nil {
-		return output.NewError(output.AddressError, "failed to get owner address", err)
+		return ioctlio.NewError(ioctlio.AddressError, "failed to get owner address", err)
 	}
 	bytecode, err := xrc20ABI.Pack("balanceOf", owner)
 	if err != nil {
-		return output.NewError(output.ConvertError, "cannot generate bytecode from given command", err)
+		return ioctlio.NewError(ioctlio.ConvertError, "cannot generate bytecode from given command", err)
 	}
 	contract, err := xrc20Contract()
 	if err != nil {
-		return output.NewError(output.AddressError, "failed to get contract address", err)
+		return ioctlio.NewError(ioctlio.AddressError, "failed to get contract address", err)
 	}
 	result, err := Read(contract, bytecode)
 	if err != nil {
-		return output.NewError(0, "failed to read contract", err)
+		return ioctlio.NewError(0, "failed to read contract", err)
 	}
 	decimal, _ := new(big.Int).SetString(result, 16)
 	if result == "" {

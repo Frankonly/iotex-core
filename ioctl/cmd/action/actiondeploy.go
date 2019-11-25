@@ -11,7 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/util"
 )
 
@@ -23,7 +23,7 @@ var actionDeployCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := deploy(args)
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
@@ -36,13 +36,13 @@ func init() {
 func deploy(args []string) error {
 	bytecode, err := decodeBytecode()
 	if err != nil {
-		return output.NewError(output.FlagError, "invalid bytecode flag", err)
+		return ioctlio.NewError(ioctlio.FlagError, "invalid bytecode flag", err)
 	}
 	amount := big.NewInt(0)
 	if len(args) == 1 {
 		amount, err = util.StringToRau(args[0], util.IotxDecimalNum)
 		if err != nil {
-			return output.NewError(output.ConvertError, "invalid amount", err)
+			return ioctlio.NewError(ioctlio.ConvertError, "invalid amount", err)
 		}
 	}
 	return Execute("", amount, bytecode)

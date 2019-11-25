@@ -18,7 +18,7 @@ import (
 	"github.com/iotexproject/iotex-core/action/protocol/poll"
 	"github.com/iotexproject/iotex-core/ioctl/cmd/alias"
 	"github.com/iotexproject/iotex-core/ioctl/cmd/config"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/validator"
 	"github.com/iotexproject/iotex-core/pkg/log"
 )
@@ -61,7 +61,7 @@ func init() {
 func stakingContract() (address.Address, error) {
 	addr, err := alias.IOAddress(stakingContractAddress)
 	if err != nil {
-		return nil, output.NewError(output.FlagError, "invalid staking contract address flag", err)
+		return nil, ioctlio.NewError(ioctlio.FlagError, "invalid staking contract address flag", err)
 	}
 
 	return addr, nil
@@ -70,11 +70,11 @@ func stakingContract() (address.Address, error) {
 func parseStakeDuration(stakeDurationString string) (*big.Int, error) {
 	stakeDuration, ok := new(big.Int).SetString(stakeDurationString, 10)
 	if !ok {
-		return nil, output.NewError(output.ConvertError, "failed to convert stake duration", nil)
+		return nil, ioctlio.NewError(ioctlio.ConvertError, "failed to convert stake duration", nil)
 	}
 
 	if err := validator.ValidateStakeDuration(stakeDuration); err != nil {
-		return nil, output.NewError(output.ValidationError, "invalid stake duration", err)
+		return nil, ioctlio.NewError(ioctlio.ValidationError, "invalid stake duration", err)
 	}
 
 	return stakeDuration, nil
@@ -83,7 +83,7 @@ func parseStakeDuration(stakeDurationString string) (*big.Int, error) {
 func bucketAction(function string, args []string) error {
 	bucketIndex, ok := new(big.Int).SetString(args[0], 10)
 	if !ok {
-		return output.NewError(output.ConvertError, "failed to convert bucket index", nil)
+		return ioctlio.NewError(ioctlio.ConvertError, "failed to convert bucket index", nil)
 	}
 
 	data := []byte{}
@@ -94,12 +94,12 @@ func bucketAction(function string, args []string) error {
 
 	contract, err := stakingContract()
 	if err != nil {
-		return output.NewError(output.AddressError, "failed to get contract address", err)
+		return ioctlio.NewError(ioctlio.AddressError, "failed to get contract address", err)
 	}
 
 	bytecode, err := stakeABI.Pack(function, bucketIndex, data)
 	if err != nil {
-		return output.NewError(output.ConvertError, "cannot generate bytecode from given command", err)
+		return ioctlio.NewError(ioctlio.ConvertError, "cannot generate bytecode from given command", err)
 	}
 
 	return Execute(contract.String(), big.NewInt(0), bytecode)

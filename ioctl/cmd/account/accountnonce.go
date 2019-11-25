@@ -11,7 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/util"
 )
 
@@ -27,7 +27,7 @@ var accountNonceCmd = &cobra.Command{
 			arg = args[0]
 		}
 		err := nonce(arg)
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
@@ -41,11 +41,11 @@ type nonceMessage struct {
 func nonce(arg string) error {
 	addr, err := util.GetAddress(arg)
 	if err != nil {
-		return output.NewError(output.AddressError, "failed to get address", err)
+		return ioctlio.NewError(ioctlio.AddressError, "failed to get address", err)
 	}
 	accountMeta, err := GetAccountMeta(addr)
 	if err != nil {
-		return output.NewError(0, "", err)
+		return ioctlio.NewError(0, "", err)
 	}
 	message := nonceMessage{
 		Address:      addr,
@@ -57,9 +57,9 @@ func nonce(arg string) error {
 }
 
 func (m *nonceMessage) String() string {
-	if output.Format == "" {
+	if ioctlio.Format == "" {
 		return fmt.Sprintf("%s:\nNonce: %d, Pending Nonce: %d",
 			m.Address, m.Nonce, m.PendingNonce)
 	}
-	return output.FormatString(output.Result, m)
+	return ioctlio.FormatString(ioctlio.Result, m)
 }

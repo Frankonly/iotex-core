@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/iotexproject/iotex-core/ioctl/cmd/alias"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 )
 
 // xrc20TransferFromCmd could transfer from owner address to target address
@@ -24,7 +24,7 @@ var xrc20TransferFromCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := transferFrom(args)
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
@@ -35,23 +35,23 @@ func init() {
 func transferFrom(args []string) error {
 	owner, err := alias.EtherAddress(args[0])
 	if err != nil {
-		return output.NewError(output.AddressError, "failed to get owner address", err)
+		return ioctlio.NewError(ioctlio.AddressError, "failed to get owner address", err)
 	}
 	recipient, err := alias.EtherAddress(args[1])
 	if err != nil {
-		return output.NewError(output.AddressError, "failed to get recipient address", err)
+		return ioctlio.NewError(ioctlio.AddressError, "failed to get recipient address", err)
 	}
 	contract, err := xrc20Contract()
 	if err != nil {
-		return output.NewError(output.AddressError, "failed to get contract address", err)
+		return ioctlio.NewError(ioctlio.AddressError, "failed to get contract address", err)
 	}
 	amount, err := parseAmount(contract, args[2])
 	if err != nil {
-		return output.NewError(0, "failed to parse amount", err)
+		return ioctlio.NewError(0, "failed to parse amount", err)
 	}
 	bytecode, err := xrc20ABI.Pack("transferFrom", owner, recipient, amount)
 	if err != nil {
-		return output.NewError(output.ConvertError, "cannot generate bytecode from given command", err)
+		return ioctlio.NewError(ioctlio.ConvertError, "cannot generate bytecode from given command", err)
 	}
 	return Execute(contract.String(), big.NewInt(0), bytecode)
 }

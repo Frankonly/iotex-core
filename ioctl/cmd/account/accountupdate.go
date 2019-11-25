@@ -16,7 +16,7 @@ import (
 	"github.com/iotexproject/go-pkgs/hash"
 	"github.com/iotexproject/iotex-address/address"
 	"github.com/iotexproject/iotex-core/ioctl/cmd/config"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/util"
 )
 
@@ -32,18 +32,18 @@ var accountUpdateCmd = &cobra.Command{
 			arg = args[0]
 		}
 		err := accountUpdate(arg)
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
 func accountUpdate(arg string) error {
 	account, err := util.GetAddress(arg)
 	if err != nil {
-		return output.NewError(output.AddressError, "", err)
+		return ioctlio.NewError(ioctlio.AddressError, "", err)
 	}
 	addr, err := address.FromString(account)
 	if err != nil {
-		return output.NewError(output.ConvertError, "failed to convert string into addr", err)
+		return ioctlio.NewError(ioctlio.ConvertError, "failed to convert string into addr", err)
 	}
 	// find the keystore and update
 	ks := keystore.NewKeyStore(config.ReadConfig.Wallet,
@@ -53,30 +53,30 @@ func accountUpdate(arg string) error {
 			fmt.Printf("#%s: Enter current password\n", account)
 			currentPassword, err := util.ReadSecretFromStdin()
 			if err != nil {
-				return output.NewError(output.InputError, "failed to get current password", err)
+				return ioctlio.NewError(ioctlio.InputError, "failed to get current password", err)
 			}
 			_, err = ks.SignHashWithPassphrase(v, currentPassword, hash.ZeroHash256[:])
 			if err != nil {
-				return output.NewError(output.KeystoreError, "failed to check current password", err)
+				return ioctlio.NewError(ioctlio.KeystoreError, "failed to check current password", err)
 			}
 			fmt.Printf("#%s: Enter new password\n", account)
 			password, err := util.ReadSecretFromStdin()
 			if err != nil {
-				return output.NewError(output.InputError, "failed to get current password", err)
+				return ioctlio.NewError(ioctlio.InputError, "failed to get current password", err)
 			}
 			fmt.Printf("#%s: Enter new password again\n", account)
 			passwordAgain, err := util.ReadSecretFromStdin()
 			if err != nil {
-				return output.NewError(output.InputError, "failed to get current password", err)
+				return ioctlio.NewError(ioctlio.InputError, "failed to get current password", err)
 			}
 			if password != passwordAgain {
-				return output.NewError(output.ValidationError, ErrPasswdNotMatch.Error(), nil)
+				return ioctlio.NewError(ioctlio.ValidationError, ErrPasswdNotMatch.Error(), nil)
 			}
 			if err := ks.Update(v, currentPassword, password); err != nil {
-				return output.NewError(output.KeystoreError, "failed to update keystore", err)
+				return ioctlio.NewError(ioctlio.KeystoreError, "failed to update keystore", err)
 			}
-			output.PrintResult(fmt.Sprintf("Account #%s has been updated.", account))
+			ioctlio.PrintResult(fmt.Sprintf("Account #%s has been updated.", account))
 		}
 	}
-	return output.NewError(output.KeystoreError, fmt.Sprintf("account #%s not found", account), nil)
+	return ioctlio.NewError(ioctlio.KeystoreError, fmt.Sprintf("account #%s not found", account), nil)
 }

@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 
 	"github.com/spf13/cobra"
 )
@@ -40,7 +40,7 @@ func update() error {
 	var cmdString string
 	switch versionType {
 	default:
-		return output.NewError(output.FlagError, "invalid version-type flag: "+versionType, nil)
+		return ioctlio.NewError(ioctlio.FlagError, "invalid version-type flag: "+versionType, nil)
 	case "stable":
 		cmdString = "curl --silent https://raw.githubusercontent.com/iotexproject/" +
 			"iotex-core/master/install-cli.sh | sh"
@@ -50,11 +50,11 @@ func update() error {
 
 	}
 	cmd := exec.Command("bash", "-c", cmdString)
-	output.PrintResult(fmt.Sprintf("Downloading the latest %s version ...\n", versionType))
+	ioctlio.PrintResult(fmt.Sprintf("Downloading the latest %s version ...\n", versionType))
 	err := cmd.Run()
 	if err != nil {
-		return output.NewError(output.UpdateError, "failed to update ioctl", nil)
+		return ioctlio.NewError(ioctlio.UpdateError, "failed to update ioctl", nil)
 	}
-	output.PrintResult("ioctl is up-to-date now.")
+	ioctlio.PrintResult("ioctl is up-to-date now.")
 	return nil
 }

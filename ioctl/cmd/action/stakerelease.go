@@ -3,7 +3,7 @@ package action
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 )
 
 // stakeReleaseCmd represents the stake release command
@@ -15,7 +15,7 @@ var stakeReleaseCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := release(args)
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 

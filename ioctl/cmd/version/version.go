@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/iotexproject/iotex-core/ioctl/cmd/config"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/util"
 	ver "github.com/iotexproject/iotex-core/pkg/version"
 	"github.com/iotexproject/iotex-proto/golang/iotexapi"
@@ -61,7 +61,7 @@ func version() error {
 	message = versionMessage{Object: config.ReadConfig.Endpoint}
 	conn, err := util.ConnectToEndpoint(config.ReadConfig.SecureConnect && !config.Insecure)
 	if err != nil {
-		return output.NewError(output.NetworkError, "failed to connect to endpoint", err)
+		return ioctlio.NewError(ioctlio.NetworkError, "failed to connect to endpoint", err)
 	}
 	defer conn.Close()
 	cli := iotexapi.NewAPIServiceClient(conn)
@@ -71,9 +71,9 @@ func version() error {
 	if err != nil {
 		sta, ok := status.FromError(err)
 		if ok {
-			return output.NewError(output.APIError, sta.Message(), nil)
+			return ioctlio.NewError(ioctlio.APIError, sta.Message(), nil)
 		}
-		return output.NewError(output.NetworkError,
+		return ioctlio.NewError(ioctlio.NetworkError,
 			"failed to get version from server", err)
 	}
 
@@ -83,8 +83,8 @@ func version() error {
 }
 
 func (m *versionMessage) String() string {
-	if output.Format == "" {
+	if ioctlio.Format == "" {
 		return fmt.Sprintf("%s:\n%+v\n", m.Object, m.VersionInfo)
 	}
-	return output.FormatString(output.Result, m)
+	return ioctlio.FormatString(ioctlio.Result, m)
 }

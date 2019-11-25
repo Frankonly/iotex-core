@@ -16,7 +16,7 @@ import (
 	"github.com/iotexproject/iotex-address/address"
 	"github.com/iotexproject/iotex-core/ioctl/cmd/alias"
 	"github.com/iotexproject/iotex-core/ioctl/cmd/config"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 )
 
 // accountListCmd represents the account list command
@@ -27,7 +27,7 @@ var accountListCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := accountList()
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
@@ -48,7 +48,7 @@ func accountList() error {
 	for _, v := range ks.Accounts() {
 		address, err := address.FromBytes(v.Address.Bytes())
 		if err != nil {
-			return output.NewError(output.ConvertError, "failed to convert bytes into address", err)
+			return ioctlio.NewError(ioctlio.ConvertError, "failed to convert bytes into address", err)
 		}
 		message.Accounts = append(message.Accounts, account{
 			Address: address.String(),
@@ -60,7 +60,7 @@ func accountList() error {
 }
 
 func (m *listMessage) String() string {
-	if output.Format == "" {
+	if ioctlio.Format == "" {
 		lines := make([]string, 0)
 		for _, account := range m.Accounts {
 			line := account.Address
@@ -71,5 +71,5 @@ func (m *listMessage) String() string {
 		}
 		return strings.Join(lines, "\n")
 	}
-	return output.FormatString(output.Result, m)
+	return ioctlio.FormatString(ioctlio.Result, m)
 }

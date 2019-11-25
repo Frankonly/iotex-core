@@ -14,7 +14,7 @@ import (
 
 	"github.com/iotexproject/iotex-proto/golang/iotextypes"
 
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 )
 
 // actionSendRawCmd represents the action send raw transaction command
@@ -25,7 +25,7 @@ var actionSendRawCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := sendRaw(args[0])
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
@@ -36,11 +36,11 @@ func init() {
 func sendRaw(arg string) error {
 	actBytes, err := hex.DecodeString(arg)
 	if err != nil {
-		return output.NewError(output.ConvertError, "failed to decode data", err)
+		return ioctlio.NewError(ioctlio.ConvertError, "failed to decode data", err)
 	}
 	act := &iotextypes.Action{}
 	if err := proto.Unmarshal(actBytes, act); err != nil {
-		return output.NewError(output.SerializationError, "failed to unmarshal data bytes", err)
+		return ioctlio.NewError(ioctlio.SerializationError, "failed to unmarshal data bytes", err)
 	}
 	return SendRaw(act)
 }

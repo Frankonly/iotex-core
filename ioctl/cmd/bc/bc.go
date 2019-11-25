@@ -16,7 +16,7 @@ import (
 	"github.com/iotexproject/iotex-proto/golang/iotextypes"
 
 	"github.com/iotexproject/iotex-core/ioctl/cmd/config"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/util"
 )
 
@@ -39,7 +39,7 @@ func init() {
 func GetChainMeta() (*iotextypes.ChainMeta, error) {
 	conn, err := util.ConnectToEndpoint(config.ReadConfig.SecureConnect && !config.Insecure)
 	if err != nil {
-		return nil, output.NewError(output.NetworkError, "failed to connect to endpoint", err)
+		return nil, ioctlio.NewError(ioctlio.NetworkError, "failed to connect to endpoint", err)
 	}
 	defer conn.Close()
 	cli := iotexapi.NewAPIServiceClient(conn)
@@ -49,9 +49,9 @@ func GetChainMeta() (*iotextypes.ChainMeta, error) {
 	if err != nil {
 		sta, ok := status.FromError(err)
 		if ok {
-			return nil, output.NewError(output.APIError, sta.Message(), nil)
+			return nil, ioctlio.NewError(ioctlio.APIError, sta.Message(), nil)
 		}
-		return nil, output.NewError(output.NetworkError, "failed to invoke GetChainMeta api", err)
+		return nil, ioctlio.NewError(ioctlio.NetworkError, "failed to invoke GetChainMeta api", err)
 	}
 	return response.ChainMeta, nil
 }
@@ -60,7 +60,7 @@ func GetChainMeta() (*iotextypes.ChainMeta, error) {
 func GetEpochMeta(epochNum uint64) (*iotexapi.GetEpochMetaResponse, error) {
 	conn, err := util.ConnectToEndpoint(config.ReadConfig.SecureConnect && !config.Insecure)
 	if err != nil {
-		return nil, output.NewError(output.NetworkError, "failed to connect to endpoint", err)
+		return nil, ioctlio.NewError(ioctlio.NetworkError, "failed to connect to endpoint", err)
 	}
 	defer conn.Close()
 	cli := iotexapi.NewAPIServiceClient(conn)
@@ -70,9 +70,9 @@ func GetEpochMeta(epochNum uint64) (*iotexapi.GetEpochMetaResponse, error) {
 	if err != nil {
 		sta, ok := status.FromError(err)
 		if ok {
-			return nil, output.NewError(output.APIError, sta.Message(), nil)
+			return nil, ioctlio.NewError(ioctlio.APIError, sta.Message(), nil)
 		}
-		return nil, output.NewError(output.NetworkError, "failed to invoke GetEpochMeta api", err)
+		return nil, ioctlio.NewError(ioctlio.NetworkError, "failed to invoke GetEpochMeta api", err)
 	}
 	return response, nil
 }

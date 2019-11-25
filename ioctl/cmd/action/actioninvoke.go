@@ -11,7 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/util"
 )
 
@@ -24,7 +24,7 @@ var actionInvokeCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := invoke(args)
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
@@ -37,18 +37,18 @@ func init() {
 func invoke(args []string) error {
 	contract, err := util.Address(args[0])
 	if err != nil {
-		return output.NewError(output.AddressError, "failed to get contract address", err)
+		return ioctlio.NewError(ioctlio.AddressError, "failed to get contract address", err)
 	}
 	amount := big.NewInt(0)
 	if len(args) == 2 {
 		amount, err = util.StringToRau(args[1], util.IotxDecimalNum)
 		if err != nil {
-			return output.NewError(output.ConvertError, "invalid amount", err)
+			return ioctlio.NewError(ioctlio.ConvertError, "invalid amount", err)
 		}
 	}
 	bytecode, err := decodeBytecode()
 	if err != nil {
-		return output.NewError(output.ConvertError, "invalid bytecode", err)
+		return ioctlio.NewError(ioctlio.ConvertError, "invalid bytecode", err)
 	}
 	return Execute(contract, amount, bytecode)
 }

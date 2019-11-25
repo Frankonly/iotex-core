@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/iotexproject/iotex-core/action"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/util"
 )
 
@@ -25,7 +25,7 @@ var actionTransferCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := transfer(args)
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
@@ -36,22 +36,22 @@ func init() {
 func transfer(args []string) error {
 	recipient, err := util.Address(args[0])
 	if err != nil {
-		return output.NewError(output.AddressError, "failed to get recipient address", err)
+		return ioctlio.NewError(ioctlio.AddressError, "failed to get recipient address", err)
 	}
 	amount, err := util.StringToRau(args[1], util.IotxDecimalNum)
 	if err != nil {
-		return output.NewError(output.ConvertError, "invalid amount", err)
+		return ioctlio.NewError(ioctlio.ConvertError, "invalid amount", err)
 	}
 	var payload []byte
 	if len(args) == 3 {
 		payload, err = hex.DecodeString(args[2])
 		if err != nil {
-			return output.NewError(output.ConvertError, "failed to decode data", err)
+			return ioctlio.NewError(ioctlio.ConvertError, "failed to decode data", err)
 		}
 	}
 	sender, err := signer()
 	if err != nil {
-		return output.NewError(output.AddressError, "failed to get signed address", err)
+		return ioctlio.NewError(ioctlio.AddressError, "failed to get signed address", err)
 	}
 	gasLimit := gasLimitFlag.Value().(uint64)
 	if gasLimit == 0 {
@@ -60,16 +60,16 @@ func transfer(args []string) error {
 	}
 	gasPriceRau, err := gasPriceInRau()
 	if err != nil {
-		return output.NewError(0, "failed to get gas price", err)
+		return ioctlio.NewError(0, "failed to get gas price", err)
 	}
 	nonce, err := nonce(sender)
 	if err != nil {
-		return output.NewError(0, "failed to get nonce ", err)
+		return ioctlio.NewError(0, "failed to get nonce ", err)
 	}
 	tx, err := action.NewTransfer(nonce, amount,
 		recipient, payload, gasLimit, gasPriceRau)
 	if err != nil {
-		return output.NewError(output.InstantiationError, "failed to make a Transfer instance", err)
+		return ioctlio.NewError(ioctlio.InstantiationError, "failed to make a Transfer instance", err)
 	}
 	return SendAction(
 		(&action.EnvelopeBuilder{}).

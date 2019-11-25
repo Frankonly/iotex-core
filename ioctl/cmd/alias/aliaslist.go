@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/iotexproject/iotex-core/ioctl/cmd/config"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 )
 
 // aliasListCmd represents the alias list command
@@ -47,12 +47,12 @@ func aliasList() {
 }
 
 func (m *aliasListMessage) String() string {
-	if output.Format == "" {
+	if ioctlio.Format == "" {
 		lines := make([]string, 0)
 		for _, aliasMeta := range m.AliasList {
 			lines = append(lines, fmt.Sprintf("%s - %s", aliasMeta.Address, aliasMeta.Name))
 		}
 		return fmt.Sprint(strings.Join(lines, "\n"))
 	}
-	return output.FormatString(output.Result, m)
+	return ioctlio.FormatString(ioctlio.Result, m)
 }

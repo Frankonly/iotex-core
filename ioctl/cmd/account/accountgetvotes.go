@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/iotexproject/iotex-core/ioctl/cmd/config"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/util"
 )
 
@@ -27,22 +27,22 @@ var accountGetVotesCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := getVotes(args)
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
 func getVotes(args []string) error {
 	offset, err := strconv.ParseUint(args[2], 10, 32)
 	if err != nil {
-		return output.NewError(output.ConvertError, "failed to get offset", err)
+		return ioctlio.NewError(ioctlio.ConvertError, "failed to get offset", err)
 	}
 	limit, err := strconv.ParseUint(args[3], 10, 32)
 	if err != nil {
-		return output.NewError(output.ConvertError, "failed to get limit", err)
+		return ioctlio.NewError(ioctlio.ConvertError, "failed to get limit", err)
 	}
 	conn, err := util.ConnectToEndpoint(config.ReadConfig.SecureConnect && !config.Insecure)
 	if err != nil {
-		return output.NewError(output.NetworkError, "failed to connect endpoint", err)
+		return ioctlio.NewError(ioctlio.NetworkError, "failed to connect endpoint", err)
 	}
 	defer conn.Close()
 
@@ -58,10 +58,10 @@ func getVotes(args []string) error {
 	if err != nil {
 		sta, ok := status.FromError(err)
 		if ok {
-			return output.NewError(output.APIError, sta.Message(), nil)
+			return ioctlio.NewError(ioctlio.APIError, sta.Message(), nil)
 		}
-		return output.NewError(output.NetworkError, "failed to invoke GetVotes api", err)
+		return ioctlio.NewError(ioctlio.NetworkError, "failed to invoke GetVotes api", err)
 	}
-	output.PrintResult(res.String())
+	ioctlio.PrintResult(res.String())
 	return nil
 }

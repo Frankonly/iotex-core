@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/util"
 	"github.com/iotexproject/iotex-core/ioctl/validator"
 )
@@ -19,7 +19,7 @@ var stakeCreateCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := create(args)
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
@@ -31,11 +31,11 @@ func init() {
 func create(args []string) error {
 	amount, err := util.StringToRau(args[0], util.IotxDecimalNum)
 	if err != nil {
-		return output.NewError(output.ConvertError, "invalid IOTX amount", err)
+		return ioctlio.NewError(ioctlio.ConvertError, "invalid IOTX amount", err)
 	}
 
 	if err := validator.ValidateCandidateName(args[1]); err != nil {
-		return output.NewError(output.ValidationError, "invalid candidate name", err)
+		return ioctlio.NewError(ioctlio.ValidationError, "invalid candidate name", err)
 	}
 
 	var candidateName [12]byte
@@ -43,7 +43,7 @@ func create(args []string) error {
 
 	stakeDuration, err := parseStakeDuration(args[2])
 	if err != nil {
-		return output.NewError(0, "", err)
+		return ioctlio.NewError(0, "", err)
 	}
 
 	data := []byte{}
@@ -54,12 +54,12 @@ func create(args []string) error {
 
 	contract, err := stakingContract()
 	if err != nil {
-		return output.NewError(output.AddressError, "failed to get contract address", err)
+		return ioctlio.NewError(ioctlio.AddressError, "failed to get contract address", err)
 	}
 
 	bytecode, err := stakeABI.Pack("createPygg", candidateName, stakeDuration, autoRestake, data)
 	if err != nil {
-		return output.NewError(output.ConvertError, "cannot generate bytecode from given command", err)
+		return ioctlio.NewError(ioctlio.ConvertError, "cannot generate bytecode from given command", err)
 	}
 
 	return Execute(contract.String(), amount, bytecode)

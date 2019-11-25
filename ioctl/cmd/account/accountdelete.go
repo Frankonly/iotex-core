@@ -20,7 +20,7 @@ import (
 	"github.com/iotexproject/iotex-address/address"
 	"github.com/iotexproject/iotex-core/ioctl/cmd/alias"
 	"github.com/iotexproject/iotex-core/ioctl/cmd/config"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/util"
 )
 
@@ -36,18 +36,18 @@ var accountDeleteCmd = &cobra.Command{
 			arg = args[0]
 		}
 		err := accountDelete(arg)
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
 func accountDelete(arg string) error {
 	addr, err := util.GetAddress(arg)
 	if err != nil {
-		return output.NewError(output.AddressError, "failed to get address", err)
+		return ioctlio.NewError(ioctlio.AddressError, "failed to get address", err)
 	}
 	account, err := address.FromString(addr)
 	if err != nil {
-		return output.NewError(output.ConvertError, fmt.Sprintf("failed to convert string into address"),
+		return ioctlio.NewError(ioctlio.ConvertError, fmt.Sprintf("failed to convert string into address"),
 			nil)
 	}
 	ks := keystore.NewKeyStore(config.ReadConfig.Wallet,
@@ -58,31 +58,31 @@ func accountDelete(arg string) error {
 			info := fmt.Sprintf("** This is an irreversible action!\n" +
 				"Once an account is deleted, all the assets under this account may be lost!\n" +
 				"Type 'YES' to continue, quit for anything else.")
-			message := output.ConfirmationMessage{Info: info, Options: []string{"yes"}}
+			message := ioctlio.ConfirmationMessage{Info: info, Options: []string{"yes"}}
 			fmt.Println(message.String())
 			fmt.Scanf("%s", &confirm)
 			if !strings.EqualFold(confirm, "yes") {
-				output.PrintResult("quit")
+				ioctlio.PrintResult("quit")
 				return nil
 			}
 
 			if err := os.Remove(v.URL.Path); err != nil {
-				return output.NewError(output.WriteFileError, "failed to remove keystore file", err)
+				return ioctlio.NewError(ioctlio.WriteFileError, "failed to remove keystore file", err)
 			}
 
 			aliases := alias.GetAliasMap()
 			delete(config.ReadConfig.Aliases, aliases[addr])
 			out, err := yaml.Marshal(&config.ReadConfig)
 			if err != nil {
-				return output.NewError(output.SerializationError, "", err)
+				return ioctlio.NewError(ioctlio.SerializationError, "", err)
 			}
 			if err := ioutil.WriteFile(config.DefaultConfigFile, out, 0600); err != nil {
-				return output.NewError(output.WriteFileError,
+				return ioctlio.NewError(ioctlio.WriteFileError,
 					fmt.Sprintf("Failed to write to config file %s.", config.DefaultConfigFile), err)
 			}
-			output.PrintResult(fmt.Sprintf("Account #%s has been deleted.", addr))
+			ioctlio.PrintResult(fmt.Sprintf("Account #%s has been deleted.", addr))
 			return nil
 		}
 	}
-	return output.NewError(output.ValidationError, fmt.Sprintf("account #%s not found", addr), nil)
+	return ioctlio.NewError(ioctlio.ValidationError, fmt.Sprintf("account #%s not found", addr), nil)
 }

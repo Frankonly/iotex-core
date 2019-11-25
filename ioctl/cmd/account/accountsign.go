@@ -11,7 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/util"
 )
 
@@ -25,7 +25,7 @@ var accountSignCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := accountSign(args[0])
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
@@ -36,17 +36,17 @@ func init() {
 func accountSign(msg string) error {
 	addr, err := util.GetAddress(signer)
 	if err != nil {
-		return output.NewError(output.InputError, "failed to get signer addr", err)
+		return ioctlio.NewError(ioctlio.InputError, "failed to get signer addr", err)
 	}
 	fmt.Printf("Enter password #%s:\n", addr)
 	password, err := util.ReadSecretFromStdin()
 	if err != nil {
-		return output.NewError(output.InputError, "failed to get password", err)
+		return ioctlio.NewError(ioctlio.InputError, "failed to get password", err)
 	}
 	signedMessage, err := Sign(addr, password, msg)
 	if err != nil {
-		return output.NewError(output.KeystoreError, "failed to sign message", err)
+		return ioctlio.NewError(ioctlio.KeystoreError, "failed to sign message", err)
 	}
-	output.PrintResult(signedMessage)
+	ioctlio.PrintResult(signedMessage)
 	return nil
 }

@@ -23,7 +23,7 @@ import (
 	"github.com/iotexproject/iotex-core/ioctl/cmd/alias"
 	"github.com/iotexproject/iotex-core/ioctl/cmd/bc"
 	"github.com/iotexproject/iotex-core/ioctl/cmd/config"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/util"
 	"github.com/iotexproject/iotex-core/pkg/util/byteutil"
 	"github.com/iotexproject/iotex-core/state"
@@ -48,7 +48,7 @@ var nodeDelegateCmd = &cobra.Command{
 		} else {
 			err = delegates()
 		}
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 
 	},
 }
@@ -70,7 +70,7 @@ type delegatesMessage struct {
 }
 
 func (m *delegatesMessage) String() string {
-	if output.Format == "" {
+	if ioctlio.Format == "" {
 		aliasLen := 5
 		for _, bp := range m.Delegates {
 			if len(bp.Alias) > aliasLen {
@@ -89,7 +89,7 @@ func (m *delegatesMessage) String() string {
 		}
 		return strings.Join(lines, "\n")
 	}
-	return output.FormatString(output.Result, m)
+	return ioctlio.FormatString(ioctlio.Result, m)
 }
 
 type nextDelegatesMessage struct {
@@ -99,7 +99,7 @@ type nextDelegatesMessage struct {
 }
 
 func (m *nextDelegatesMessage) String() string {
-	if output.Format == "" {
+	if ioctlio.Format == "" {
 		if !m.Determined {
 			return fmt.Sprintf("delegates of upcoming epoch #%d are not determined", epochNum)
 		}
@@ -119,7 +119,7 @@ func (m *nextDelegatesMessage) String() string {
 		}
 		return strings.Join(lines, "\n")
 	}
-	return output.FormatString(output.Result, m)
+	return ioctlio.FormatString(ioctlio.Result, m)
 }
 
 func init() {
@@ -133,13 +133,13 @@ func delegates() error {
 	if epochNum == 0 {
 		chainMeta, err := bc.GetChainMeta()
 		if err != nil {
-			return output.NewError(0, "failed to get chain meta", err)
+			return ioctlio.NewError(0, "failed to get chain meta", err)
 		}
 		epochNum = chainMeta.Epoch.Num
 	}
 	response, err := bc.GetEpochMeta(epochNum)
 	if err != nil {
-		return output.NewError(0, "failed to get epoch meta", err)
+		return ioctlio.NewError(0, "failed to get epoch meta", err)
 	}
 	epochData := response.EpochData
 	aliases := alias.GetAliasMap()
@@ -151,7 +151,7 @@ func delegates() error {
 	for rank, bp := range response.BlockProducersInfo {
 		votes, ok := big.NewInt(0).SetString(bp.Votes, 10)
 		if !ok {
-			return output.NewError(output.ConvertError, "failed to convert votes into big int", nil)
+			return ioctlio.NewError(ioctlio.ConvertError, "failed to convert votes into big int", nil)
 		}
 		delegate := delegate{
 			Address:    bp.Address,
@@ -170,13 +170,13 @@ func delegates() error {
 func nextDelegates() error {
 	chainMeta, err := bc.GetChainMeta()
 	if err != nil {
-		return output.NewError(0, "failed to get chain meta", err)
+		return ioctlio.NewError(0, "failed to get chain meta", err)
 	}
 	epochNum = chainMeta.Epoch.Num + 1
 	message := nextDelegatesMessage{Epoch: int(epochNum)}
 	conn, err := util.ConnectToEndpoint(config.ReadConfig.SecureConnect && !config.Insecure)
 	if err != nil {
-		return output.NewError(output.NetworkError, "failed to connect to endpoint", err)
+		return ioctlio.NewError(ioctlio.NetworkError, "failed to connect to endpoint", err)
 	}
 	defer conn.Close()
 
@@ -195,14 +195,14 @@ func nextDelegates() error {
 			fmt.Println(message.String())
 			return nil
 		} else if ok {
-			return output.NewError(output.APIError, sta.Message(), nil)
+			return ioctlio.NewError(ioctlio.APIError, sta.Message(), nil)
 		}
-		return output.NewError(output.NetworkError, "failed to invoke ReadState api", err)
+		return ioctlio.NewError(ioctlio.NetworkError, "failed to invoke ReadState api", err)
 	}
 	message.Determined = true
 	var ABPs state.CandidateList
 	if err := ABPs.Deserialize(abpResponse.Data); err != nil {
-		return output.NewError(output.SerializationError, "failed to deserialize active BPs", err)
+		return ioctlio.NewError(ioctlio.SerializationError, "failed to deserialize active BPs", err)
 	}
 	request = &iotexapi.ReadStateRequest{
 		ProtocolID: []byte(poll.ProtocolID),
@@ -213,13 +213,13 @@ func nextDelegates() error {
 	if err != nil {
 		sta, ok := status.FromError(err)
 		if ok {
-			return output.NewError(output.APIError, sta.Message(), nil)
+			return ioctlio.NewError(ioctlio.APIError, sta.Message(), nil)
 		}
-		return output.NewError(output.NetworkError, "failed to invoke ReadState api", err)
+		return ioctlio.NewError(ioctlio.NetworkError, "failed to invoke ReadState api", err)
 	}
 	var BPs state.CandidateList
 	if err := BPs.Deserialize(bpResponse.Data); err != nil {
-		return output.NewError(output.SerializationError, "failed to deserialize BPs", err)
+		return ioctlio.NewError(ioctlio.SerializationError, "failed to deserialize BPs", err)
 	}
 	isActive := make(map[string]bool)
 	for _, abp := range ABPs {

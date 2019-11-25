@@ -15,7 +15,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/iotexproject/iotex-core/ioctl/cmd/config"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/validator"
 )
 
@@ -27,14 +27,14 @@ var accountCreateAddCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := accountCreateAdd(args)
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
 func accountCreateAdd(args []string) error {
 	// Validate inputs
 	if err := validator.ValidateAlias(args[0]); err != nil {
-		return output.NewError(output.ValidationError, "invalid alias", err)
+		return ioctlio.NewError(ioctlio.ValidationError, "invalid alias", err)
 	}
 	alias := args[0]
 	if addr, ok := config.ReadConfig.Aliases[alias]; ok {
@@ -42,28 +42,28 @@ func accountCreateAdd(args []string) error {
 		info := fmt.Sprintf("** Alias \"%s\" has already used for %s\n"+
 			"Overwriting the account will keep the previous keystore file stay, "+
 			"but bind the alias to the new one.\nWould you like to continue?\n", alias, addr)
-		message := output.ConfirmationMessage{Info: info, Options: []string{"yes"}}
+		message := ioctlio.ConfirmationMessage{Info: info, Options: []string{"yes"}}
 		fmt.Println(message.String())
 		fmt.Scanf("%s", &confirm)
 		if !strings.EqualFold(confirm, "yes") {
-			output.PrintResult("quit")
+			ioctlio.PrintResult("quit")
 			return nil
 		}
 	}
 	addr, err := newAccount(alias, config.ReadConfig.Wallet)
 	if err != nil {
-		return output.NewError(0, "", err)
+		return ioctlio.NewError(0, "", err)
 	}
 	config.ReadConfig.Aliases[alias] = addr
 	out, err := yaml.Marshal(&config.ReadConfig)
 	if err != nil {
-		return output.NewError(output.SerializationError, "failed to marshal config", err)
+		return ioctlio.NewError(ioctlio.SerializationError, "failed to marshal config", err)
 	}
 	if err := ioutil.WriteFile(config.DefaultConfigFile, out, 0600); err != nil {
-		return output.NewError(output.WriteFileError,
+		return ioctlio.NewError(ioctlio.WriteFileError,
 			fmt.Sprintf("failed to write to config file %s", config.DefaultConfigFile), err)
 	}
-	output.PrintResult(fmt.Sprintf("New account \"%s\" is created.\n"+
+	ioctlio.PrintResult(fmt.Sprintf("New account \"%s\" is created.\n"+
 		"Please Keep your password, or your will lose your private key.", alias))
 	return nil
 }

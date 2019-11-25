@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/iotexproject/iotex-address/address"
-	"github.com/iotexproject/iotex-core/ioctl/output"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
 	"github.com/iotexproject/iotex-core/ioctl/util"
 )
 
@@ -25,7 +25,7 @@ var accountEthaddrCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
 		err := accountEthaddr(args[0])
-		return output.PrintError(err)
+		return ioctlio.PrintError(err)
 	},
 }
 
@@ -39,19 +39,19 @@ func accountEthaddr(arg string) error {
 	ioAddr, err := util.Address(arg)
 	if err != nil {
 		if ok := common.IsHexAddress(arg); !ok {
-			return output.NewError(output.AddressError, "", err)
+			return ioctlio.NewError(ioctlio.AddressError, "", err)
 		}
 		ethAddress = common.HexToAddress(arg)
 		ioAddress, err := address.FromBytes(ethAddress.Bytes())
 		if err != nil {
-			return output.NewError(output.AddressError,
+			return ioctlio.NewError(ioctlio.AddressError,
 				fmt.Sprintf("failed to form IoTeX address from ETH address"), nil)
 		}
 		ioAddr = ioAddress.String()
 	} else {
 		ethAddress, err = util.IoAddrToEvmAddr(ioAddr)
 		if err != nil {
-			return output.NewError(output.AddressError, "", err)
+			return ioctlio.NewError(ioctlio.AddressError, "", err)
 		}
 	}
 	message := ethaddrMessage{IOAddr: ioAddr, EthAddr: ethAddress.String()}
@@ -60,8 +60,8 @@ func accountEthaddr(arg string) error {
 }
 
 func (m *ethaddrMessage) String() string {
-	if output.Format == "" {
+	if ioctlio.Format == "" {
 		return fmt.Sprintf("%s - %s", m.IOAddr, m.EthAddr)
 	}
-	return output.FormatString(output.Result, m)
+	return ioctlio.FormatString(ioctlio.Result, m)
 }
