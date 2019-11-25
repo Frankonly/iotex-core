@@ -15,7 +15,7 @@ import (
 
 	"github.com/iotexproject/iotex-core/ioctl/cmd/config"
 	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
-	"github.com/iotexproject/iotex-core/ioctl/validator"
+	"github.com/iotexproject/iotex-core/ioctl/util/validator"
 )
 
 // aliasRemoveCmd represents the alias remove command

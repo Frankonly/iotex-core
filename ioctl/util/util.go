@@ -14,8 +14,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
-
 	"github.com/ethereum/go-ethereum/common"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/ssh/terminal"
@@ -23,8 +21,10 @@ import (
 	"google.golang.org/grpc/credentials"
 
 	"github.com/iotexproject/iotex-address/address"
+
 	"github.com/iotexproject/iotex-core/ioctl/cmd/config"
-	"github.com/iotexproject/iotex-core/ioctl/validator"
+	"github.com/iotexproject/iotex-core/ioctl/ioctlio"
+	"github.com/iotexproject/iotex-core/ioctl/util/validator"
 	"github.com/iotexproject/iotex-core/pkg/log"
 	"github.com/iotexproject/iotex-core/pkg/unit"
 )

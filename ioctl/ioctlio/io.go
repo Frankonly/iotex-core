@@ -5,3 +5,8 @@
 // License 2.0 that can be found in the LICENSE file.
 
 package ioctlio
+
+// code for testing single command
+//
+// rootCmd.SetArgs([]string{"sub", "arg1", "arg2"})
+// rootCmd.Execute()
