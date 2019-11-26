@@ -8,5 +8,5 @@ package ioctlio
 
 // code for testing single command
 //
-// rootCmd.SetArgs([]string{"sub", "arg1", "arg2"})
+// rootCmd.SetArgs([]string{"sub", "arg1", "arg2"}) // args here contain flags
 // rootCmd.Execute()
