@@ -26,7 +26,6 @@ import (
 	"github.com/iotexproject/iotex-core/action"
 	"github.com/iotexproject/iotex-core/action/protocol"
 	"github.com/iotexproject/iotex-core/action/protocol/account"
-	accountutil "github.com/iotexproject/iotex-core/action/protocol/account/util"
 	"github.com/iotexproject/iotex-core/action/protocol/execution"
 	"github.com/iotexproject/iotex-core/action/protocol/poll"
 	"github.com/iotexproject/iotex-core/action/protocol/rewarding"
@@ -437,14 +436,14 @@ var (
 		balance   *big.Int
 	}{
 		{
-			protocolID: rewarding.ProtocolID,
+			protocolID: "rewarding",
 			methodName: "UnclaimedBalance",
 			addr:       identityset.Address(0).String(),
 			returnErr:  false,
 			balance:    unit.ConvertIotxToRau(64), // 4 block * 36 IOTX reward by default = 144 IOTX
 		},
 		{
-			protocolID: rewarding.ProtocolID,
+			protocolID: "rewarding",
 			methodName: "UnclaimedBalance",
 			addr:       identityset.Address(1).String(),
 			returnErr:  false,
@@ -457,7 +456,7 @@ var (
 			returnErr:  true,
 		},
 		{
-			protocolID: rewarding.ProtocolID,
+			protocolID: "rewarding",
 			methodName: "Wrong Method",
 			addr:       identityset.Address(27).String(),
 			returnErr:  true,
@@ -998,7 +997,7 @@ func TestServer_GetChainMeta(t *testing.T) {
 		svr, err := createServer(cfg, false)
 		require.NoError(err)
 		if pol != nil {
-			require.NoError(svr.registry.ForceRegister(poll.ProtocolID, pol))
+			require.NoError(pol.ForceRegister(svr.registry))
 		}
 		if test.emptyChain {
 			mbc := mock_blockchain.NewMockBlockchain(ctrl)
@@ -1188,7 +1187,7 @@ func TestServer_TotalBalance(t *testing.T) {
 	require.NoError(t, err)
 
 	out, err := svr.ReadState(context.Background(), &iotexapi.ReadStateRequest{
-		ProtocolID: []byte(rewarding.ProtocolID),
+		ProtocolID: []byte("rewarding"),
 		MethodName: []byte("TotalBalance"),
 		Arguments:  nil,
 	})
@@ -1205,7 +1204,7 @@ func TestServer_AvailableBalance(t *testing.T) {
 	require.NoError(t, err)
 
 	out, err := svr.ReadState(context.Background(), &iotexapi.ReadStateRequest{
-		ProtocolID: []byte(rewarding.ProtocolID),
+		ProtocolID: []byte("rewarding"),
 		MethodName: []byte("AvailableBalance"),
 		Arguments:  nil,
 	})
@@ -1255,7 +1254,7 @@ func TestServer_ReadDelegatesByEpoch(t *testing.T) {
 		}
 		svr, err := createServer(cfg, false)
 		require.NoError(err)
-		require.NoError(svr.registry.ForceRegister(poll.ProtocolID, pol))
+		require.NoError(pol.ForceRegister(svr.registry))
 
 		res, err := svr.ReadState(context.Background(), &iotexapi.ReadStateRequest{
 			ProtocolID: []byte(test.protocolID),
@@ -1309,7 +1308,7 @@ func TestServer_ReadBlockProducersByEpoch(t *testing.T) {
 		}
 		svr, err := createServer(cfg, false)
 		require.NoError(err)
-		require.NoError(svr.registry.ForceRegister(poll.ProtocolID, pol))
+		require.NoError(pol.ForceRegister(svr.registry))
 
 		res, err := svr.ReadState(context.Background(), &iotexapi.ReadStateRequest{
 			ProtocolID: []byte(test.protocolID),
@@ -1363,7 +1362,7 @@ func TestServer_ReadActiveBlockProducersByEpoch(t *testing.T) {
 		}
 		svr, err := createServer(cfg, false)
 		require.NoError(err)
-		require.NoError(svr.registry.ForceRegister(poll.ProtocolID, pol))
+		require.NoError(pol.ForceRegister(svr.registry))
 
 		res, err := svr.ReadState(context.Background(), &iotexapi.ReadStateRequest{
 			ProtocolID: []byte(test.protocolID),
@@ -1422,7 +1421,7 @@ func TestServer_GetEpochMeta(t *testing.T) {
 	for _, test := range getEpochMetaTests {
 		if test.pollProtocolType == lld {
 			pol := poll.NewLifeLongDelegatesProtocol(cfg.Genesis.Delegates)
-			require.NoError(svr.registry.ForceRegister(poll.ProtocolID, pol))
+			require.NoError(pol.ForceRegister(svr.registry))
 		} else if test.pollProtocolType == "governanceChainCommittee" {
 			committee := mock_committee.NewMockCommittee(ctrl)
 			msf := mock_factory.NewMockFactory(ctrl)
@@ -1471,16 +1470,23 @@ func TestServer_GetEpochMeta(t *testing.T) {
 				cfg.Genesis.NumDelegates,
 				cfg.Chain.PollInitialCandidatesInterval,
 			)
-			require.NoError(svr.registry.ForceRegister(poll.ProtocolID, pol))
+			require.NoError(pol.ForceRegister(svr.registry))
 			committee.EXPECT().HeightByTime(gomock.Any()).Return(test.epochData.GravityChainStartHeight, nil)
 
 			mbc.EXPECT().TipHeight().Return(uint64(4)).Times(2)
 			mbc.EXPECT().Factory().Return(msf).Times(2)
 			msf.EXPECT().NewWorkingSet().Return(nil, nil).Times(2)
-			mbc.EXPECT().Context().Return(protocol.WithRunActionsCtx(context.Background(), protocol.RunActionsCtx{
-				Registry:    svr.registry,
-				BlockHeight: uint64(4),
-			}), nil).Times(1)
+			ctx := protocol.WithBlockchainCtx(
+				context.Background(),
+				protocol.BlockchainCtx{
+					Registry: svr.registry,
+					Tip: protocol.TipInfo{
+						Height:    uint64(4),
+						Timestamp: time.Time{},
+					},
+				},
+			)
+			mbc.EXPECT().Context().Return(ctx, nil).Times(1)
 			mbc.EXPECT().BlockHeaderByHeight(gomock.Any()).DoAndReturn(func(height uint64) (*block.Header, error) {
 				if height > 0 && height <= 4 {
 					pk := identityset.PrivateKey(int(height))
@@ -1576,31 +1582,6 @@ func TestServer_GetLogs(t *testing.T) {
 		logs := res.Logs
 		require.Equal(test.numLogs, len(logs))
 	}
-}
-
-func addProducerToFactory(sf factory.Factory, registry *protocol.Registry) error {
-	ws, err := sf.NewWorkingSet()
-	if err != nil {
-		return err
-	}
-	if _, err = accountutil.LoadOrCreateAccount(
-		ws,
-		identityset.Address(27).String(),
-		unit.ConvertIotxToRau(10000000000),
-	); err != nil {
-		return err
-	}
-	gasLimit := testutil.TestGasLimit
-	ctx := protocol.WithRunActionsCtx(context.Background(),
-		protocol.RunActionsCtx{
-			Producer: identityset.Address(27),
-			GasLimit: gasLimit,
-			Registry: registry,
-		})
-	if _, err = ws.RunActions(ctx, 0, nil); err != nil {
-		return err
-	}
-	return sf.Commit(ws)
 }
 
 func addTestingBlocks(bc blockchain.Blockchain) error {
@@ -1769,6 +1750,7 @@ func setupChain(cfg config.Config) (blockchain.Blockchain, blockdao.BlockDAO, bl
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
+	cfg.Genesis.InitBalanceMap[identityset.Address(27).String()] = unit.ConvertIotxToRau(10000000000).String()
 	// create indexer
 	indexer, err := blockindex.NewIndexer(db.NewMemKVStore(), cfg.Genesis.Hash())
 	if err != nil {
@@ -1794,7 +1776,7 @@ func setupChain(cfg config.Config) (blockchain.Blockchain, blockdao.BlockDAO, bl
 		delete(cfg.Plugins, config.GatewayPlugin)
 	}()
 
-	acc := account.NewProtocol()
+	acc := account.NewProtocol(rewarding.DepositGas)
 	evm := execution.NewProtocol(bc.BlockDAO().GetBlockHash)
 	p := poll.NewLifeLongDelegatesProtocol(cfg.Genesis.Delegates)
 	rolldposProtocol := rolldpos.NewProtocol(
@@ -1807,19 +1789,19 @@ func setupChain(cfg config.Config) (blockchain.Blockchain, blockdao.BlockDAO, bl
 		return 0, nil, nil
 	}, rolldposProtocol)
 
-	if err := registry.Register(rolldpos.ProtocolID, rolldposProtocol); err != nil {
+	if err := rolldposProtocol.Register(registry); err != nil {
 		return nil, nil, nil, nil, err
 	}
-	if err := registry.Register(account.ProtocolID, acc); err != nil {
+	if err := acc.Register(registry); err != nil {
 		return nil, nil, nil, nil, err
 	}
-	if err := registry.Register(execution.ProtocolID, evm); err != nil {
+	if err := evm.Register(registry); err != nil {
 		return nil, nil, nil, nil, err
 	}
-	if err := registry.Register(rewarding.ProtocolID, r); err != nil {
+	if err := r.Register(registry); err != nil {
 		return nil, nil, nil, nil, err
 	}
-	if err := registry.Register(poll.ProtocolID, p); err != nil {
+	if err := p.Register(registry); err != nil {
 		return nil, nil, nil, nil, err
 	}
 	bc.Validator().AddActionEnvelopeValidators(protocol.NewGenericValidator(bc.Factory().Nonce))
@@ -1871,11 +1853,6 @@ func createServer(cfg config.Config, needActPool bool) (*Server, error) {
 
 	// Start blockchain
 	if err := bc.Start(ctx); err != nil {
-		return nil, err
-	}
-
-	// Create state for producer
-	if err := addProducerToFactory(bc.Factory(), registry); err != nil {
 		return nil, err
 	}
 
